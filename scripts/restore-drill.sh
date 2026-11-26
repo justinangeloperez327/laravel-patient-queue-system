@@ -5,7 +5,8 @@
 #
 # Usage: scripts/restore-drill.sh <backup.dump.enc>
 # Required environment: BACKUP_PASSPHRASE_FILE, PGHOST PGPORT PGUSER (+ PGPASSWORD)
-# Optional: DRILL_DATABASE (default patient_queue_restore_drill), KEEP_DRILL_DATABASE=1
+# Optional: DRILL_DATABASE (default patient_queue_restore_drill), KEEP_DRILL_DATABASE=1,
+#           PG_BIN_DIR (client tools matching the server; auto-detected)
 set -euo pipefail
 umask 077
 
@@ -17,7 +18,10 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 fail() { echo "DRILL FAILED: $*" >&2; exit 1; }
-sql() { psql --no-psqlrc --quiet --tuples-only --no-align --set ON_ERROR_STOP=1 --dbname "$drill_db" --command "$1"; }
+# shellcheck source=pg-tools.sh
+source "$(dirname "$0")/pg-tools.sh"
+select_pg_tools --dbname postgres || fail "no PostgreSQL client tools match the server version"
+sql() { "${PG_BIN}psql" --no-psqlrc --quiet --tuples-only --no-align --set ON_ERROR_STOP=1 --dbname "$drill_db" --command "$1"; }
 
 echo "1/5 Verifying checksum"
 if [[ -f "$backup.sha256" ]]; then
@@ -31,9 +35,9 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass "file:$BACKUP_PASSPHRASE_
   || fail "cannot decrypt (wrong passphrase or corrupt file)"
 
 echo "3/5 Restoring into scratch database $drill_db"
-dropdb --if-exists "$drill_db"
-createdb "$drill_db"
-pg_restore --no-owner --no-privileges --exit-on-error --dbname "$drill_db" "$work/backup.dump" || fail "pg_restore failed"
+"${PG_BIN}dropdb" --if-exists "$drill_db"
+"${PG_BIN}createdb" "$drill_db"
+"${PG_BIN}pg_restore" --no-owner --no-privileges --exit-on-error --dbname "$drill_db" "$work/backup.dump" || fail "pg_restore failed"
 
 echo "4/5 Verifying safeguards"
 for trigger in audit_logs_no_update_or_delete queue_events_no_update_or_delete clinical_notes_signed_immutable clinical_note_amendments_append_only vital_signs_no_update_or_delete; do
@@ -46,7 +50,7 @@ done
 [[ "$(sql "select count(*) from pg_extension where extname = 'btree_gist'")" == "1" ]] || fail "btree_gist extension missing"
 # The append-only trigger must still reject changes after restore (row triggers need a row).
 if [[ "$(sql "select count(*) from audit_logs")" != "0" ]]; then
-  if psql --no-psqlrc --quiet --set ON_ERROR_STOP=1 --dbname "$drill_db" \
+  if "${PG_BIN}psql" --no-psqlrc --quiet --set ON_ERROR_STOP=1 --dbname "$drill_db" \
        --command "begin; update audit_logs set action = action; rollback;" >/dev/null 2>&1; then
     fail "audit_logs accepted an UPDATE after restore"
   fi
@@ -77,7 +81,7 @@ else
 fi
 
 if [[ "${KEEP_DRILL_DATABASE:-0}" != "1" ]]; then
-  dropdb "$drill_db"
+  "${PG_BIN}dropdb" "$drill_db"
 fi
 
 echo "RESTORE DRILL PASSED for $(basename "$backup")"

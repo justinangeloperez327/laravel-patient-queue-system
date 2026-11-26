@@ -10,6 +10,8 @@
 #   BACKUP_PASSPHRASE_FILE  file holding the encryption passphrase (chmod 600)
 #   PGHOST PGPORT PGUSER PGDATABASE (+ PGPASSWORD or ~/.pgpass)
 # Optional:
+#   PG_BIN_DIR              client tools matching the server's major version
+#                           (auto-detected; see pg-tools.sh)
 #   BACKUP_RETENTION_DAYS   delete local backups older than this (default 30;
 #                           set per the clinic's approved retention policy)
 set -euo pipefail
@@ -20,12 +22,16 @@ umask 077
 : "${PGDATABASE:?PGDATABASE is required}"
 [[ -r "$BACKUP_PASSPHRASE_FILE" ]] || { echo "Passphrase file is not readable." >&2; exit 1; }
 
+# shellcheck source=pg-tools.sh
+source "$(dirname "$0")/pg-tools.sh"
+select_pg_tools
+
 mkdir -p "$BACKUP_DIR"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 base="$BACKUP_DIR/patient-queue-$stamp"
 
 # Row counts of every application table, recorded before the snapshot.
-psql --no-psqlrc --quiet --tuples-only --no-align --set ON_ERROR_STOP=1 --command "
+"${PG_BIN}psql" --no-psqlrc --quiet --tuples-only --no-align --set ON_ERROR_STOP=1 --command "
   select coalesce(json_object_agg(table_name, row_count order by table_name), '{}'::json)
   from (
     select c.relname as table_name,
@@ -34,7 +40,7 @@ psql --no-psqlrc --quiet --tuples-only --no-align --set ON_ERROR_STOP=1 --comman
     where n.nspname = 'public' and c.relkind = 'r'
   ) counts" > "$base.manifest.json"
 
-pg_dump --format=custom --no-owner --no-privileges \
+"${PG_BIN}pg_dump" --format=custom --no-owner --no-privileges \
   | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass "file:$BACKUP_PASSPHRASE_FILE" -out "$base.dump.enc"
 
 sha256sum "$base.dump.enc" | awk '{print $1}' > "$base.dump.enc.sha256"
