@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\DisplayDevice;
 use App\Models\Patient;
 use App\Models\User;
+use App\Services\ClinicSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->app->make(ClinicSettings::class)->applyToConfig();
         $this->auditDeniedClinicalAccess();
 
         // Pairing keys are long random strings, but limit guessing anyway.

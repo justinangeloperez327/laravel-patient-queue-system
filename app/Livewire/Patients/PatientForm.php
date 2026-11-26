@@ -7,6 +7,7 @@ namespace App\Livewire\Patients;
 use App\Actions\Patients\RegisterPatient;
 use App\Actions\Patients\UpdatePatientDemographics;
 use App\Enums\Sex;
+use App\Models\AuditLog;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -60,6 +61,10 @@ final class PatientForm extends Component
 
         $this->authorize('update', $patient);
         $this->patient = $patient;
+
+        /** @var User $viewer */
+        $viewer = Auth::user();
+        AuditLog::record($viewer, 'patient.viewed', $patient, ['context' => 'edit']);
 
         $this->first_name = $patient->first_name;
         $this->middle_name = $patient->middle_name ?? '';

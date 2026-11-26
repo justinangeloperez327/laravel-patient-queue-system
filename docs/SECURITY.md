@@ -1,2 +1,4 @@
 # Security and privacy
 Public repository: synthetic fixtures only; never commit real patient records, credentials, dumps or production configuration. Staff authentication, 2FA, session expiry, CSRF, rate limits, least privilege, department/care scope, audited reads and writes. Signed clinical notes immutable; amendments attributed and signed. TLS, encrypted storage/backups, secret rotation, restore tests. Sanitize logs, errors, exports and WebSocket payloads; display device credentials revocable and scoped. No names, diagnoses or contact details in public display. Validate hosting jurisdiction, retention, deletion, breach response and healthcare regulatory obligations with clinic before production. No claim of regulatory compliance until reviewed.
+
+Implementation status and open decisions: see [operations/THREAT_MODEL.md](operations/THREAT_MODEL.md), [operations/PRIVACY_REVIEW.md](operations/PRIVACY_REVIEW.md) and the phase 08 release gate.

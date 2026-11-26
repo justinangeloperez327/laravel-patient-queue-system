@@ -3,6 +3,8 @@
 use App\Enums\Permission;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\ReportExportController;
+use App\Livewire\Admin\AuditLogIndex;
+use App\Livewire\Admin\ClinicSettingsForm;
 use App\Livewire\Appointments\AppointmentCalendar;
 use App\Livewire\Appointments\AppointmentDetail;
 use App\Livewire\Appointments\BookAppointmentForm;
@@ -91,6 +93,9 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('displays', DisplayIndex::class)->middleware('can:viewAny,'.DisplayDevice::class)->name('displays.index');
     Route::livewire('displays/create', DisplayForm::class)->middleware('can:create,'.DisplayDevice::class)->name('displays.create');
     Route::livewire('displays/{device}/edit', DisplayForm::class)->middleware('can:update,device')->name('displays.edit');
+
+    Route::livewire('settings/clinic', ClinicSettingsForm::class)->middleware('can:'.Permission::ManageSettings->value)->name('clinic-settings');
+    Route::livewire('audit-log', AuditLogIndex::class)->middleware('can:'.Permission::ViewAuditLogs->value)->name('audit-log');
 
     Route::livewire('staff', StaffIndex::class)->middleware('can:viewAny,'.User::class)->name('staff.index');
     Route::livewire('staff/create', StaffForm::class)->middleware('can:create,'.User::class)->name('staff.create');

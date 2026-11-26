@@ -54,6 +54,7 @@ enum Role: string
                 Permission::ManageSchedules,
                 Permission::ViewOperationalReports,
                 Permission::ExportReports,
+                Permission::ViewAuditLogs,
             ],
             self::Receptionist => [
                 Permission::ViewDashboard,

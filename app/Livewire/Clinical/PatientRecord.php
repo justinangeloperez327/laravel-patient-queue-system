@@ -6,6 +6,7 @@ namespace App\Livewire\Clinical;
 
 use App\Actions\Clinical\AmendClinicalNote;
 use App\Enums\ClinicalNoteStatus;
+use App\Models\AuditLog;
 use App\Models\ClinicalNote;
 use App\Models\Patient;
 use App\Models\User;
@@ -44,6 +45,7 @@ final class PatientRecord extends Component
     {
         $this->authorize('viewRecord', $patient);
         $this->patient = $patient;
+        AuditLog::record($this->user(), 'patient.viewed', $patient, ['context' => 'record']);
 
         if ($this->user()->can('viewClinicalHistory', $patient)) {
             $access->authorizeHistory($this->user(), $patient, 'patient_record');

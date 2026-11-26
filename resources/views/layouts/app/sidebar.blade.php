@@ -74,6 +74,12 @@
                                 {{ $link['label'] }}
                             </flux:sidebar.item>
                         @endforeach
+                        @can(\App\Enums\Permission::ManageSettings->value)
+                            <flux:sidebar.item icon="adjustments-horizontal" :href="route('clinic-settings')" :current="request()->routeIs('clinic-settings')" wire:navigate>{{ __('Clinic settings') }}</flux:sidebar.item>
+                        @endcan
+                        @can(\App\Enums\Permission::ViewAuditLogs->value)
+                            <flux:sidebar.item icon="shield-check" :href="route('audit-log')" :current="request()->routeIs('audit-log')" wire:navigate>{{ __('Audit log') }}</flux:sidebar.item>
+                        @endcan
                     </flux:sidebar.group>
                 @endif
             </flux:sidebar.nav>
