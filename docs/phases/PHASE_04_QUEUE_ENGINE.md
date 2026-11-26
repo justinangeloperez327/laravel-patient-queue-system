@@ -1,5 +1,5 @@
 # Phase 04 — Queue engine
-Status: Implemented and verified locally; completion waits on the first CI run for phases 02–04
+Status: Complete — merged to `main`, CI green
 Dependencies: 03
 ## Objective and scope
 Implement atomic daily sequences, call-next, recall, skip, requeue, start, complete, cancel and transfer; enforce counter sessions and eligibility.
@@ -85,4 +85,4 @@ Concurrent PostgreSQL tests prove no duplicate tickets or claims; transfers atom
   - The next call reported that nobody was waiting, because appointment tickets are not yet eligible.
   - The receptionist gets 403 on `/workspace`.
 ## Completion
-- [ ] Acceptance criteria verified and implementation plan updated.
+- [x] Acceptance criteria verified and implementation plan updated. CI (GitHub Actions `tests`) passed on the pull requests and on `main` for #1, #2 and #3 (runs 1–6, 2026-11-26), including the multi-process concurrency suite against PostgreSQL 16.

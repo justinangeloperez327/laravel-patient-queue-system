@@ -54,9 +54,18 @@
                         ['model' => \App\Models\Department::class, 'route' => 'departments', 'icon' => 'building-office', 'label' => __('Departments')],
                         ['model' => \App\Models\Service::class, 'route' => 'services', 'icon' => 'clipboard-document-list', 'label' => __('Services')],
                         ['model' => \App\Models\Counter::class, 'route' => 'counters', 'icon' => 'computer-desktop', 'label' => __('Counters')],
+                        ['model' => \App\Models\DisplayDevice::class, 'route' => 'displays', 'icon' => 'tv', 'label' => __('Displays')],
                         ['model' => \App\Models\User::class, 'route' => 'staff', 'icon' => 'identification', 'label' => __('Staff')],
                     ])->filter(fn (array $link): bool => auth()->user()->can('viewAny', $link['model']));
                 @endphp
+
+                @can(\App\Enums\Permission::ViewOperationalReports->value)
+                    <flux:sidebar.group :heading="__('Insights')" class="grid">
+                        <flux:sidebar.item icon="chart-bar" :href="route('reports.index')" :current="request()->routeIs('reports.*')" wire:navigate>
+                            {{ __('Reports') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
 
                 @if ($adminLinks->isNotEmpty())
                     <flux:sidebar.group :heading="__('Administration')" class="grid">
@@ -65,6 +74,12 @@
                                 {{ $link['label'] }}
                             </flux:sidebar.item>
                         @endforeach
+                        @can(\App\Enums\Permission::ManageSettings->value)
+                            <flux:sidebar.item icon="adjustments-horizontal" :href="route('clinic-settings')" :current="request()->routeIs('clinic-settings')" wire:navigate>{{ __('Clinic settings') }}</flux:sidebar.item>
+                        @endcan
+                        @can(\App\Enums\Permission::ViewAuditLogs->value)
+                            <flux:sidebar.item icon="shield-check" :href="route('audit-log')" :current="request()->routeIs('audit-log')" wire:navigate>{{ __('Audit log') }}</flux:sidebar.item>
+                        @endcan
                     </flux:sidebar.group>
                 @endif
             </flux:sidebar.nav>

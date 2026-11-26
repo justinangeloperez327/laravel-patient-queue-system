@@ -108,4 +108,20 @@ class Visit extends Model
     {
         return $this->hasMany(QueueTicket::class)->orderBy('id');
     }
+
+    /**
+     * @return HasMany<ClinicalNote, $this>
+     */
+    public function clinicalNotes(): HasMany
+    {
+        return $this->hasMany(ClinicalNote::class)->orderBy('id');
+    }
+
+    /**
+     * @return HasMany<VitalSign, $this>
+     */
+    public function vitalSigns(): HasMany
+    {
+        return $this->hasMany(VitalSign::class)->orderBy('recorded_at');
+    }
 }

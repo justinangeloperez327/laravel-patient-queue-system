@@ -51,4 +51,19 @@ return [
         'max_recalls' => (int) env('CLINIC_MAX_RECALLS', 3),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Security
+    |--------------------------------------------------------------------------
+    |
+    | require_two_factor: staff must confirm TOTP two-factor authentication
+    | before using the application (docs/SECURITY.md). Recommended on in
+    | production; `php artisan clinic:preflight` fails when it is off.
+    |
+    */
+
+    'security' => [
+        'require_two_factor' => (bool) env('CLINIC_REQUIRE_TWO_FACTOR', false),
+    ],
+
 ];

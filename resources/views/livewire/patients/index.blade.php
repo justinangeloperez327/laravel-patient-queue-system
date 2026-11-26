@@ -38,6 +38,7 @@
                         <flux:badge size="sm" :color="$patient->is_active ? 'green' : 'zinc'">{{ $patient->is_active ? __('Active') : __('Inactive') }}</flux:badge>
                     </flux:table.cell>
                     <flux:table.cell align="end">
+                        <flux:button size="sm" variant="ghost" :href="route('patients.show', $patient)" wire:navigate>{{ __('Open') }}</flux:button>
                         @can('update', $patient)
                             <flux:button size="sm" variant="ghost" :href="route('patients.edit', $patient)" wire:navigate>{{ __('Edit') }}</flux:button>
                         @endcan

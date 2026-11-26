@@ -2,9 +2,18 @@
 
 namespace App\Providers;
 
+use App\Models\AuditLog;
+use App\Models\DisplayDevice;
+use App\Models\Patient;
+use App\Models\User;
+use App\Services\ClinicSettings;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +33,31 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->app->make(ClinicSettings::class)->applyToConfig();
+        $this->auditDeniedClinicalAccess();
+
+        // Pairing keys are long random strings, but limit guessing anyway.
+        RateLimiter::for('display-pairing', function (Request $request): Limit {
+            $device = $request->route('device');
+            $id = $device instanceof DisplayDevice ? (string) $device->getKey() : (is_scalar($device) ? (string) $device : '');
+
+            return Limit::perMinute(5)->by($request->ip().'|'.$id);
+        });
+    }
+
+    /**
+     * Every refused attempt to open a patient record is audited, wherever
+     * the check happens (route middleware, component or action).
+     */
+    protected function auditDeniedClinicalAccess(): void
+    {
+        Gate::after(function (?User $user, string $ability, ?bool $result, array $arguments): void {
+            if ($result === true || $user === null || $ability !== 'viewRecord' || ! ($arguments[0] ?? null) instanceof Patient) {
+                return;
+            }
+
+            AuditLog::record($user, 'clinical.history.view', $arguments[0], ['context' => 'patient_record'], 'denied');
+        });
     }
 
     /**

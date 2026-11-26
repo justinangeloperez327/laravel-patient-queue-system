@@ -44,7 +44,7 @@ final class QueueEventRecorder
         $event->metadata = $metadata;
         $event->save();
 
-        QueueTicketChanged::dispatch($ticket->id, $ticket->service_id, $ticket->counter_id, $type->value);
+        QueueTicketChanged::dispatch($event->id, $ticket->id, $ticket->service_id, $ticket->counter_id, $type->value);
 
         return $event;
     }

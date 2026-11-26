@@ -80,6 +80,9 @@ jobs:
           npm ci
           npm run build
 
+      - name: Display client tests (node --test)
+        run: npm test
+
       - name: Check formatting (Pint)
         run: composer lint:check
 
@@ -88,6 +91,21 @@ jobs:
 
       - name: Run migrations and seeders against PostgreSQL
         run: php artisan migrate:fresh --seed --force
+
+      - name: Backup and restore drill
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: 5432
+          PGUSER: patient_queue
+          PGPASSWORD: patient_queue
+          PGDATABASE: patient_queue_testing
+        run: |
+          export BACKUP_DIR="$RUNNER_TEMP/backups"
+          export BACKUP_PASSPHRASE_FILE="$RUNNER_TEMP/backup.pass"
+          umask 077
+          openssl rand -base64 48 > "$BACKUP_PASSPHRASE_FILE"
+          scripts/backup.sh
+          scripts/restore-drill.sh "$(ls "$BACKUP_DIR"/*.dump.enc | tail -n 1)"
 
       - name: Run test suite (Pest)
         run: php artisan test --compact

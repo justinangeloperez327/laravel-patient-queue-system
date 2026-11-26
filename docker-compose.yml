@@ -42,6 +42,21 @@ services:
       redis:
         condition: service_healthy
 
+  # WebSocket server for waiting-room displays (phase 06). Requires REVERB_* keys in .env.
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "${REVERB_PORT:-8080}:8080"
+    environment: *app-environment
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      redis:
+        condition: service_healthy
+
   node:
     image: node:22-bookworm-slim
     working_dir: /app

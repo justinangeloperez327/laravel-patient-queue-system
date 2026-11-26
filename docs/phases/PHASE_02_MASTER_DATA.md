@@ -1,5 +1,5 @@
 # Phase 02 — Master data
-Status: Implemented and verified locally; completion waits on the first CI run (shared with phase 01)
+Status: Complete — merged to `main`, CI green
 Dependencies: 01
 ## Objective and scope
 Implement receptionist-only patient CRUD, departments, services, counters, staff assignments, provider schedules and exceptions.
@@ -48,4 +48,4 @@ Validate unique codes, department scope, schedule intervals and triage routing; 
   - A service was created with triage routing through the UI.
   - A patient was registered (`PT-000013`); the duplicate warning appears for the same name and date of birth; search finds the patient.
 ## Completion
-- [ ] Acceptance criteria verified and implementation plan updated.
+- [x] Acceptance criteria verified and implementation plan updated. CI (GitHub Actions `tests`) passed on the pull requests and on `main` for #1, #2 and #3 (runs 1–6, 2026-11-26), including the multi-process concurrency suite against PostgreSQL 16.

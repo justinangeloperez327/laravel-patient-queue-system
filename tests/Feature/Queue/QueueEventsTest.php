@@ -87,7 +87,7 @@ test('change events are dispatched only after commit and carry no patient data',
     Event::assertDispatched(QueueTicketChanged::class, function (QueueTicketChanged $event) use ($ticket) {
         return $event->ticketId === $ticket->id
             && $event->eventType === 'issued'
-            && array_keys(get_object_vars($event)) === ['ticketId', 'serviceId', 'counterId', 'eventType'];
+            && array_keys(get_object_vars($event)) === ['queueEventId', 'ticketId', 'serviceId', 'counterId', 'eventType'];
     });
 });
 

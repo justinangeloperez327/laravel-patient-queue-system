@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Patients;
 
+use App\Models\AuditLog;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,8 @@ final class RegisterPatient
             $patient->patient_number = sprintf('PT-%06d', (int) DB::scalar("select nextval('patient_number_seq')"));
             $patient->registered_by = $actor->id;
             $patient->save();
+
+            AuditLog::record($actor, 'patient.registered', $patient);
 
             return $patient;
         });

@@ -1,5 +1,5 @@
 # Phase 03 — Appointments and reception
-Status: Implemented and verified locally; completion waits on the first CI run (shared with phases 01–02)
+Status: Complete — merged to `main`, CI green
 Dependencies: 02
 ## Objective and scope
 Implement calendar, provider availability, booking, rescheduling, cancellation, check-in and walk-in visits; integrate ticket issuance in phase 04.
@@ -72,4 +72,4 @@ Reject overlapping bookings and duplicate check-ins under concurrency; test grac
   - The doctor gets 403 on `/reception`, `/appointments` and `/visits`.
 - Fixed during verification: a Blade component named `slot-picker` was parsed as a `<x-slot>` tag and hid most of the booking form. It was renamed `appointment-slots`.
 ## Completion
-- [ ] Acceptance criteria verified and implementation plan updated.
+- [x] Acceptance criteria verified and implementation plan updated. CI (GitHub Actions `tests`) passed on the pull requests and on `main` for #1, #2 and #3 (runs 1–6, 2026-11-26), including the multi-process concurrency suite against PostgreSQL 16.
