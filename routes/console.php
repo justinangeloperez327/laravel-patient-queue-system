@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('appointments:mark-no-shows')->hourly()->withoutOverlapping();
+Schedule::command('queue:close-day')->hourly()->withoutOverlapping();

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A service point (desk, room or station) that calls patients.
@@ -71,5 +72,18 @@ class Counter extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * @return HasMany<CounterSession, $this>
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(CounterSession::class);
+    }
+
+    public function serves(int $serviceId): bool
+    {
+        return $this->services()->whereKey($serviceId)->exists();
     }
 }

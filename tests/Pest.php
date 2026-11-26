@@ -1,12 +1,18 @@
 <?php
 
 use App\Actions\Appointments\BookAppointment;
+use App\Actions\Queues\CallNextTicket;
+use App\Actions\Queues\OpenCounterSession;
+use App\Actions\Visits\RegisterWalkIn;
 use App\Enums\DayOfWeek;
 use App\Enums\Role;
 use App\Models\Appointment;
+use App\Models\Counter;
+use App\Models\CounterSession;
 use App\Models\Department;
 use App\Models\Patient;
 use App\Models\ProviderSchedule;
+use App\Models\QueueTicket;
 use App\Models\Service;
 use App\Models\StaffAssignment;
 use App\Models\User;
@@ -139,4 +145,87 @@ function book(array $fixture, string $startUtc = '2030-01-07 09:00:00', array $o
         'scheduled_start_at' => CarbonImmutable::parse($startUtc, 'UTC')->toIso8601String(),
         ...$overrides,
     ]);
+}
+
+/**
+ * A small clinic for queue tests on Monday 2030-01-07 08:00 UTC:
+ * NUR department with triage service T (counter TRIAGE-1, nurse), OPD with
+ * consultation C requiring triage (counters ROOM-1 and ROOM-2, doctor), LAB
+ * with L and PHR with P (counter for each, service staff assigned to both).
+ *
+ * @return array<string, mixed>
+ */
+function queueFixture(): array
+{
+    test()->travelTo(CarbonImmutable::parse('2030-01-07 08:00:00', 'UTC'));
+
+    $dept = fn (string $code) => Department::factory()->create(['code' => $code, 'name' => $code.' department']);
+    [$nur, $opd, $lab, $phr] = [$dept('NUR'), $dept('OPD'), $dept('LAB'), $dept('PHR')];
+
+    $t = Service::factory()->create(['department_id' => $nur->id, 'queue_prefix' => 'T', 'name' => 'Triage']);
+    $c = Service::factory()->appointable()->triagedBy($t)->create(['department_id' => $opd->id, 'queue_prefix' => 'C', 'name' => 'Consultation']);
+    $l = Service::factory()->create(['department_id' => $lab->id, 'queue_prefix' => 'L', 'name' => 'Laboratory']);
+    $p = Service::factory()->create(['department_id' => $phr->id, 'queue_prefix' => 'P', 'name' => 'Pharmacy']);
+
+    $counter = function (Service $service, string $code) {
+        $counter = Counter::factory()->create(['department_id' => $service->department_id, 'code' => $code, 'name' => $code]);
+        $counter->services()->attach($service->id, ['department_id' => $service->department_id]);
+
+        return $counter;
+    };
+
+    $nurse = providerIn($nur, Role::Nurse);
+    $doctor = providerIn($opd);
+    $serviceStaff = providerIn($lab, Role::ServiceStaff);
+    StaffAssignment::factory()->create(['user_id' => $serviceStaff->id, 'department_id' => $phr->id]);
+
+    return [
+        'receptionist' => receptionist(),
+        'nurse' => $nurse,
+        'doctor' => $doctor,
+        'serviceStaff' => $serviceStaff,
+        'departments' => compact('nur', 'opd', 'lab', 'phr'),
+        'services' => compact('t', 'c', 'l', 'p'),
+        'counters' => [
+            'triage' => $counter($t, 'TRIAGE-1'),
+            'room1' => $counter($c, 'ROOM-1'),
+            'room2' => $counter($c, 'ROOM-2'),
+            'lab' => $counter($l, 'LAB-1'),
+            'pharmacy' => $counter($p, 'PHARM-1'),
+        ],
+    ];
+}
+
+/**
+ * Walk a patient in and return their first ticket.
+ *
+ * @param  array<string, mixed>  $fixture
+ */
+function walkInTicket(array $fixture, ?Service $service = null, ?Patient $patient = null, bool $sendToTriage = false): QueueTicket
+{
+    $visit = app(RegisterWalkIn::class)->handle($fixture['receptionist'], [
+        'patient_id' => ($patient ?? Patient::factory()->create())->id,
+        'service_id' => ($service ?? $fixture['services']['l'])->id,
+        'send_to_triage' => $sendToTriage,
+    ]);
+
+    return $visit->tickets()->sole();
+}
+
+function openCounter(User $user, Counter $counter): CounterSession
+{
+    return app(OpenCounterSession::class)->handle($user, $counter);
+}
+
+function callNext(User $user, Counter $counter, ?string $key = null): QueueTicket
+{
+    return app(CallNextTicket::class)->handle($user, $counter, $key);
+}
+
+/**
+ * @param  class-string  $action
+ */
+function act(string $action, User $user, QueueTicket $ticket, ?string $key = null): QueueTicket
+{
+    return app($action)->handle($user, $ticket, $key);
 }

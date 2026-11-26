@@ -2,7 +2,7 @@
 
 use App\Actions\Appointments\CancelAppointment;
 use App\Actions\Visits\CheckInAppointment;
-use App\Actions\Visits\CloseVisitBeforeService;
+use App\Actions\Visits\CloseVisit;
 use App\Actions\Visits\RegisterWalkIn;
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitStatus;
@@ -131,7 +131,7 @@ test('walk-in visit numbers share the daily sequence', function () {
 
 test('cancelling an appointment visit cancels the appointment; leaving keeps it checked in', function () {
     $fixture = bookingFixture();
-    $close = app(CloseVisitBeforeService::class);
+    $close = app(CloseVisit::class);
 
     $visit = checkIn($fixture, $appointment = book($fixture));
     $close->handle($fixture['receptionist'], $visit, VisitStatus::Cancelled, 'Registered in error');
@@ -151,7 +151,7 @@ test('cancelling an appointment visit cancels the appointment; leaving keeps it 
 test('a closed visit lets the patient check in again', function () {
     $fixture = bookingFixture();
     $visit = walkIn($fixture);
-    app(CloseVisitBeforeService::class)->handle($fixture['receptionist'], $visit, VisitStatus::LeftWithoutService, 'Left');
+    app(CloseVisit::class)->handle($fixture['receptionist'], $visit, VisitStatus::LeftWithoutService, 'Left');
 
     expect(walkIn($fixture)->visit_number)->toBe('V-20300107-0002');
 });
@@ -161,8 +161,8 @@ test('only visits that have not started service can be closed at reception', fun
     $visit = walkIn($fixture);
     $visit->forceFill(['status' => VisitStatus::InProgress])->save();
 
-    expectValidationError(fn () => app(CloseVisitBeforeService::class)->handle($fixture['receptionist'], $visit, VisitStatus::Cancelled, 'x'), 'status');
-    expectValidationError(fn () => app(CloseVisitBeforeService::class)->handle($fixture['receptionist'], walkIn($fixture, ['patient_id' => Patient::factory()->create()->id]), VisitStatus::Cancelled, ' '), 'reason');
+    expectValidationError(fn () => app(CloseVisit::class)->handle($fixture['receptionist'], $visit, VisitStatus::Cancelled, 'x'), 'status');
+    expectValidationError(fn () => app(CloseVisit::class)->handle($fixture['receptionist'], walkIn($fixture, ['patient_id' => Patient::factory()->create()->id]), VisitStatus::Cancelled, ' '), 'reason');
 });
 
 test('the database keeps visits consistent with appointments and allows one open visit per patient', function () {

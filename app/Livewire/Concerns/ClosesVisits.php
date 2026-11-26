@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Concerns;
 
-use App\Actions\Visits\CloseVisitBeforeService;
+use App\Actions\Visits\CloseVisit;
 use App\Enums\VisitStatus;
 use App\Models\User;
 use App\Models\Visit;
@@ -38,7 +38,7 @@ trait ClosesVisits
         $this->closingOutcome = '';
     }
 
-    public function closeVisit(CloseVisitBeforeService $close): void
+    public function closeVisit(CloseVisit $close): void
     {
         /** @var User $actor */
         $actor = Auth::user();

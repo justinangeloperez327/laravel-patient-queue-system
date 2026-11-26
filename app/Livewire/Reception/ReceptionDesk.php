@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Livewire\Reception;
 
+use App\Actions\Queues\IssueTicket;
 use App\Actions\Visits\CheckInAppointment;
 use App\Actions\Visits\RegisterWalkIn;
 use App\Enums\AppointmentStatus;
+use App\Enums\TriageMode;
 use App\Enums\VisitStatus;
 use App\Livewire\Concerns\ClosesVisits;
 use App\Livewire\Concerns\SearchesPatients;
@@ -19,12 +21,13 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 /**
  * Today's front desk: check in booked patients, register walk-ins and see
- * who is currently checked in. Ticket issuance is added in phase 04.
+ * who is currently checked in. Check-in issues the first queue ticket.
  */
 #[Title('Reception')]
 final class ReceptionDesk extends Component
@@ -35,6 +38,15 @@ final class ReceptionDesk extends Component
     public string $service_id = '';
 
     public string $reason_for_visit = '';
+
+    public bool $sendToTriage = false;
+
+    #[Locked]
+    public ?int $issuingVisitId = null;
+
+    public string $issueServiceId = '';
+
+    public bool $issueToTriage = false;
 
     public function mount(): void
     {
@@ -62,7 +74,7 @@ final class ReceptionDesk extends Component
     public function openVisits(): Collection
     {
         return Visit::query()
-            ->with(['patient', 'requestedService'])
+            ->with(['patient', 'requestedService', 'tickets'])
             ->whereIn('status', [VisitStatus::CheckedIn->value, VisitStatus::InProgress->value])
             ->orderBy('checked_in_at')
             ->get();
@@ -77,12 +89,41 @@ final class ReceptionDesk extends Component
         return Service::query()->active()->orderBy('name')->get();
     }
 
-    public function checkIn(int $appointmentId, CheckInAppointment $checkIn): void
+    public function checkIn(int $appointmentId, CheckInAppointment $checkIn, bool $triage = false): void
     {
-        $visit = $checkIn->handle($this->actor(), Appointment::query()->findOrFail($appointmentId));
+        $visit = $checkIn->handle($this->actor(), Appointment::query()->findOrFail($appointmentId), $triage);
 
-        session()->flash('status', __('Checked in :name as visit :number.', ['name' => $visit->patient->fullName(), 'number' => $visit->visit_number]));
+        $this->flashTicket($visit);
         $this->refreshLists();
+    }
+
+    public function checkInToTriage(int $appointmentId, CheckInAppointment $checkIn): void
+    {
+        $this->checkIn($appointmentId, $checkIn, true);
+    }
+
+    public function startIssuing(int $visitId): void
+    {
+        $this->issuingVisitId = Visit::query()->findOrFail($visitId)->id;
+        $this->issueServiceId = '';
+        $this->issueToTriage = false;
+        $this->resetErrorBag();
+    }
+
+    public function issueTicket(IssueTicket $issue): void
+    {
+        $visit = Visit::query()->findOrFail($this->issuingVisitId);
+        $ticket = $issue->handle($this->actor(), $visit, Service::query()->findOrFail((int) $this->issueServiceId), $this->issueToTriage);
+
+        session()->flash('status', __('Issued ticket :ticket for visit :visit.', ['ticket' => $ticket->ticket_number, 'visit' => $visit->visit_number]));
+        $this->issuingVisitId = null;
+        $this->refreshLists();
+    }
+
+    #[Computed]
+    public function selectedServiceHasOptionalTriage(): bool
+    {
+        return $this->service_id !== '' && Service::query()->whereKey((int) $this->service_id)->where('triage_mode', TriageMode::Optional->value)->exists();
     }
 
     public function registerWalkIn(RegisterWalkIn $register): void
@@ -91,16 +132,28 @@ final class ReceptionDesk extends Component
             'patient_id' => $this->patient_id,
             'service_id' => $this->service_id === '' ? null : (int) $this->service_id,
             'reason_for_visit' => $this->reason_for_visit,
+            'send_to_triage' => $this->sendToTriage,
         ]);
 
-        session()->flash('status', __('Checked in :name as walk-in visit :number.', ['name' => $visit->patient->fullName(), 'number' => $visit->visit_number]));
-        $this->reset('patient_id', 'service_id', 'reason_for_visit', 'patientSearch');
+        $this->flashTicket($visit);
+        $this->reset('patient_id', 'service_id', 'reason_for_visit', 'patientSearch', 'sendToTriage');
         $this->refreshLists();
     }
 
     public function render(): View
     {
         return view('livewire.reception.desk');
+    }
+
+    private function flashTicket(Visit $visit): void
+    {
+        $ticket = $visit->tickets()->latest('id')->first();
+
+        session()->flash('status', __('Checked in :name (visit :visit). Ticket :ticket.', [
+            'name' => $visit->patient->fullName(),
+            'visit' => $visit->visit_number,
+            'ticket' => $ticket->ticket_number ?? '—',
+        ]));
     }
 
     private function refreshLists(): void

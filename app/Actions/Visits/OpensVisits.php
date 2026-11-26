@@ -61,6 +61,7 @@ trait OpensVisits
     protected function checkInConstraints(): array
     {
         return [
+            'queue_tickets_one_unresolved_per_visit_service' => ['patient_id', __('This patient already has a ticket in the queue.')],
             'visits_one_open_per_patient' => ['patient_id', __('This patient is already checked in.')],
             'visits_appointment_id_unique' => ['appointment', __('This appointment is already checked in.')],
         ];

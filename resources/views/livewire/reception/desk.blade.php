@@ -37,6 +37,9 @@
                             @if ($appointment->status->isPending())
                                 @if (now()->lte($appointment->checkInDeadline()))
                                     <flux:button size="sm" variant="primary" wire:click="checkIn({{ $appointment->id }})">{{ __('Check in') }}</flux:button>
+                                    @if ($appointment->service->triage_mode === \App\Enums\TriageMode::Optional)
+                                        <flux:button size="sm" wire:click="checkInToTriage({{ $appointment->id }})">{{ __('Check in → triage') }}</flux:button>
+                                    @endif
                                 @else
                                     <flux:badge size="sm" color="red">{{ __('Past grace') }}</flux:badge>
                                 @endif
@@ -57,12 +60,15 @@
         <flux:heading size="lg" level="2" id="walk-in">{{ __('Walk-in check-in') }}</flux:heading>
         <form wire:submit="registerWalkIn" class="flex max-w-2xl flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
             <x-patient-picker :selected="$this->selectedPatient" :results="$this->patientResults" :search="$patientSearch" />
-            <flux:select wire:model="service_id" :label="__('Requested service')" required>
+            <flux:select wire:model.live="service_id" :label="__('Requested service')" required>
                 <flux:select.option value="">{{ __('Choose a service') }}</flux:select.option>
                 @foreach ($this->services as $option)
                     <flux:select.option :value="$option->id">{{ $option->queue_prefix }} — {{ $option->name }}</flux:select.option>
                 @endforeach
             </flux:select>
+            @if ($this->selectedServiceHasOptionalTriage)
+                <flux:checkbox wire:model="sendToTriage" :label="__('Send to triage first')" />
+            @endif
             <flux:input wire:model="reason_for_visit" :label="__('Reason for visit')" :badge="__('Optional')" maxlength="1000" />
             <div><flux:button variant="primary" type="submit">{{ __('Check in walk-in') }}</flux:button></div>
         </form>
@@ -73,12 +79,28 @@
         @if ($closingVisitId !== null && ($closing = $this->openVisits->firstWhere('id', $closingVisitId)))
             <x-close-visit-form :visit="$closing" :outcome="$closingOutcome" />
         @endif
+        @if ($issuingVisitId !== null && ($issuing = $this->openVisits->firstWhere('id', $issuingVisitId)))
+            <form wire:submit="issueTicket" class="flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                <div class="w-72">
+                    <flux:select wire:model="issueServiceId" :label="__('New ticket for :visit', ['visit' => $issuing->visit_number])" required>
+                        <flux:select.option value="">{{ __('Choose a service') }}</flux:select.option>
+                        @foreach ($this->services as $option)
+                            <flux:select.option :value="$option->id">{{ $option->queue_prefix }} — {{ $option->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </div>
+                <flux:checkbox wire:model="issueToTriage" :label="__('Via triage if optional')" />
+                <flux:button type="submit" variant="primary">{{ __('Issue ticket') }}</flux:button>
+                <flux:button wire:click="$set('issuingVisitId', null)" variant="ghost">{{ __('Back') }}</flux:button>
+                <div class="w-full"><flux:error name="visit" /></div>
+            </form>
+        @endif
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>{{ __('Visit') }}</flux:table.column>
                 <flux:table.column>{{ __('Patient') }}</flux:table.column>
                 <flux:table.column>{{ __('Service') }}</flux:table.column>
-                <flux:table.column>{{ __('Type') }}</flux:table.column>
+                <flux:table.column>{{ __('Ticket') }}</flux:table.column>
                 <flux:table.column>{{ __('Checked in') }}</flux:table.column>
                 <flux:table.column><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
             </flux:table.columns>
@@ -88,12 +110,26 @@
                         <flux:table.cell class="font-mono">{{ $visit->visit_number }}</flux:table.cell>
                         <flux:table.cell variant="strong">{{ $visit->patient->last_name }}, {{ $visit->patient->first_name }}</flux:table.cell>
                         <flux:table.cell>{{ $visit->requestedService->queue_prefix }} — {{ $visit->requestedService->name }}</flux:table.cell>
-                        <flux:table.cell>{{ $visit->visit_type->label() }}</flux:table.cell>
+                        @php($ticket = $visit->tickets->last())
+                        @php($unresolved = $visit->tickets->first(fn ($t) => in_array($t->status, \App\Enums\QueueTicketStatus::unresolved(), true)))
+                        <flux:table.cell>
+                            @if ($ticket)
+                                <span class="font-mono font-medium">{{ $ticket->ticket_number }}</span>
+                                <flux:badge size="sm" :color="$ticket->status->color()">{{ $ticket->status->label() }}</flux:badge>
+                            @else
+                                —
+                            @endif
+                        </flux:table.cell>
                         <flux:table.cell class="tabular-nums">{{ $visit->checked_in_at->setTimezone($tz)->format('H:i') }}</flux:table.cell>
                         <flux:table.cell align="end">
-                            @if ($visit->status === \App\Enums\VisitStatus::CheckedIn)
+                            @if ($unresolved === null)
+                                <flux:button size="sm" variant="ghost" wire:click="startIssuing({{ $visit->id }})">{{ __('New ticket') }}</flux:button>
+                            @endif
+                            @if (! in_array($unresolved?->status, [\App\Enums\QueueTicketStatus::Called, \App\Enums\QueueTicketStatus::Serving], true))
                                 <flux:button size="sm" variant="ghost" wire:click="startClosing({{ $visit->id }}, 'left_without_service')">{{ __('Left without service') }}</flux:button>
-                                <flux:button size="sm" variant="ghost" wire:click="startClosing({{ $visit->id }}, 'cancelled')">{{ __('Cancel') }}</flux:button>
+                                @if ($visit->status === \App\Enums\VisitStatus::CheckedIn)
+                                    <flux:button size="sm" variant="ghost" wire:click="startClosing({{ $visit->id }}, 'cancelled')">{{ __('Cancel') }}</flux:button>
+                                @endif
                             @endif
                         </flux:table.cell>
                     </flux:table.row>
