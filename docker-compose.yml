@@ -1,0 +1,86 @@
+# Local development stack. Credentials below are local-only defaults; never
+# reuse them elsewhere. Use synthetic data only.
+name: patient-queue
+
+x-app-environment: &app-environment
+  DB_CONNECTION: pgsql
+  DB_HOST: pgsql
+  DB_PORT: 5432
+  DB_DATABASE: patient_queue
+  DB_USERNAME: patient_queue
+  DB_PASSWORD: patient_queue
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment: *app-environment
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    command: ["php", "artisan", "queue:work", "--tries=3"]
+    environment: *app-environment
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  node:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command: ["sh", "-c", "npm ci && npm run dev -- --host 0.0.0.0"]
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - .:/app
+    profiles: ["assets"]
+
+  pgsql:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: patient_queue
+      POSTGRES_USER: patient_queue
+      POSTGRES_PASSWORD: patient_queue
+    ports:
+      - "${FORWARD_DB_PORT:-5432}:5432"
+    volumes:
+      - pgsql-data:/var/lib/postgresql/data
+      - ./docker/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "patient_queue", "-d", "patient_queue"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgsql-data:
+  redis-data:
