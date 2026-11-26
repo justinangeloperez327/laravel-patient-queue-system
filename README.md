@@ -1,32 +1,19 @@
 # Laravel Patient Queue System
 
-A Laravel-based patient queue management system for clinics and outpatient facilities.
+Single-clinic queue management with walk-ins, receptionist-booked appointments, optional triage, per-service tickets, visual and voice announcements, demographics and clinical notes.
 
-## Project status
-Planning and architecture discussion. Application features and technical choices are not yet finalized.
+## Status
+Planning documented; application scaffolding pending. All eight implementation phases are pending.
 
-## Proposed scope
-- Patient registration and queue ticket issuance
-- Department- and service-specific queues
-- Staff roles and access controls
-- Queue calling, recall, skip, transfer, and completion
-- Real-time waiting area display
-- Queue history and operational reporting
+## Documentation
+- [REQUIREMENTS](docs/REQUIREMENTS.md)
+- [ARCHITECTURE](docs/ARCHITECTURE.md)
+- [DATABASE_SCHEMA](docs/DATABASE_SCHEMA.md)
+- [WORKFLOW](docs/WORKFLOW.md)
+- [ROLES_AND_PERMISSIONS](docs/ROLES_AND_PERMISSIONS.md)
+- [QUEUE_ENGINE](docs/QUEUE_ENGINE.md)
+- [SECURITY](docs/SECURITY.md)
+- [IMPLEMENTATION_PLAN](docs/IMPLEMENTATION_PLAN.md)
+- [Agent instructions](AGENTS.md)
 
-## Proposed lifecycle
-Registered → Waiting → Called → Serving → Completed
-
-Additional outcomes: Skipped, Cancelled, Transferred. These require defined rules for rejoining and audit history.
-
-## Decisions before implementation
-1. Single clinic or multi-branch support?
-2. Walk-in only or appointments as well?
-3. Laravel monolith (Blade/Livewire) or separate frontend/API?
-4. Department/service routing and queue numbering rules?
-5. Patient data minimization, privacy, and retention requirements?
-
-## Getting started
-This repository currently contains project-planning files only. The Laravel application will be scaffolded once the initial architecture decisions are agreed. No deployment is configured.
-
-## License
-Not yet selected.
+No deployment configured. Use synthetic data only. License not yet selected.
