@@ -39,6 +39,8 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
 
+require_once __DIR__.'/Support/ReportFixture.php';
+
 /*
 |--------------------------------------------------------------------------
 | Helpers

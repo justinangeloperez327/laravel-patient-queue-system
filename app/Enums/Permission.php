@@ -24,6 +24,7 @@ enum Permission: string
     case ManageDisplays = 'displays.manage';
     case ManageSchedules = 'schedules.manage';
     case ViewOperationalReports = 'reports.operational.view';
+    case ExportReports = 'reports.export';
 
     // Reception (patient demographics are receptionist-only in this phase;
     // clinical access to patient records arrives with care-relationship

@@ -59,6 +59,14 @@
                     ])->filter(fn (array $link): bool => auth()->user()->can('viewAny', $link['model']));
                 @endphp
 
+                @can(\App\Enums\Permission::ViewOperationalReports->value)
+                    <flux:sidebar.group :heading="__('Insights')" class="grid">
+                        <flux:sidebar.item icon="chart-bar" :href="route('reports.index')" :current="request()->routeIs('reports.*')" wire:navigate>
+                            {{ __('Reports') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
+
                 @if ($adminLinks->isNotEmpty())
                     <flux:sidebar.group :heading="__('Administration')" class="grid">
                         @foreach ($adminLinks as $link)

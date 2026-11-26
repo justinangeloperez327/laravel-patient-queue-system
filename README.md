@@ -3,7 +3,7 @@
 Single-clinic queue management with walk-ins, receptionist-booked appointments, optional triage, per-service tickets, visual and voice announcements, demographics and clinical notes.
 
 ## Status
-Phases 1–4 (foundation, master data, appointments and reception, queue engine) are complete and green in CI. Phases 5 (clinical documentation) and 6 (real-time waiting-room displays with voice announcements) are implemented and verified locally, awaiting CI. Phases 7–8 are pending. See the [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+Phases 1–4 (foundation, master data, appointments and reception, queue engine) are complete and green in CI. Phases 5 (clinical documentation), 6 (real-time waiting-room displays with voice announcements) and 7 (dashboard, operational reports and CSV/Excel exports) are implemented and verified locally, awaiting CI. Phase 8 (production readiness) is pending. See the [implementation plan](docs/IMPLEMENTATION_PLAN.md).
 
 ## Stack
 Laravel 13, PHP 8.3, Livewire 4, Flux, Tailwind 4, Fortify, Spatie Permission, PostgreSQL 16, Redis 7, Pest, Pint and Larastan.

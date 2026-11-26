@@ -2,6 +2,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\DisplayController;
+use App\Http\Controllers\ReportExportController;
 use App\Livewire\Appointments\AppointmentCalendar;
 use App\Livewire\Appointments\AppointmentDetail;
 use App\Livewire\Appointments\BookAppointmentForm;
@@ -19,6 +20,7 @@ use App\Livewire\Patients\PatientIndex;
 use App\Livewire\Queues\QueueBoard;
 use App\Livewire\Queues\Workspace;
 use App\Livewire\Reception\ReceptionDesk;
+use App\Livewire\Reports\ReportsPage;
 use App\Livewire\Services\ServiceForm;
 use App\Livewire\Services\ServiceIndex;
 use App\Livewire\Staff\StaffForm;
@@ -69,6 +71,9 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('workspace', Workspace::class)->middleware('can:'.Permission::OperateQueue->value)->name('workspace');
     Route::livewire('workspace/triage', TriageEncounter::class)->middleware('can:'.Permission::PerformTriage->value)->name('workspace.triage');
     Route::livewire('workspace/consultation', ConsultationEncounter::class)->middleware('can:'.Permission::ViewClinicalHistory->value)->name('workspace.consultation');
+
+    Route::livewire('reports', ReportsPage::class)->middleware('can:'.Permission::ViewOperationalReports->value)->name('reports.index');
+    Route::get('reports/export', ReportExportController::class)->middleware(['can:'.Permission::ExportReports->value, 'throttle:20,1'])->name('reports.export');
 
     // Administration.
     Route::livewire('departments', DepartmentIndex::class)->middleware('can:viewAny,'.Department::class)->name('departments.index');
