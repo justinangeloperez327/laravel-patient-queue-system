@@ -134,7 +134,7 @@ test('simultaneous walk-in check-ins of one patient create exactly one open visi
         ->and(Visit::query()->where('patient_id', $patient->id)->count())->toBe(1);
 });
 
-test('simultaneous walk-ins of different patients all succeed with unique visit numbers', function () {
+test('simultaneous walk-ins of different patients all succeed with unique ticket numbers', function () {
     [$receptionist, $service] = concurrencyFixture();
     $patients = Patient::factory()->count(WORKERS)->create(['registered_by' => $receptionist->id]);
 
@@ -143,6 +143,10 @@ test('simultaneous walk-ins of different patients all succeed with unique visit 
         'input' => ['patient_id' => $patient->id, 'service_id' => $service->id],
     ])->all());
 
+    $prefix = $service->queue_prefix;
+
     expect(successes($results))->toHaveCount(WORKERS)
-        ->and(collect(successes($results))->pluck('number')->unique())->toHaveCount(WORKERS);
+        ->and(collect(successes($results))->pluck('number')->sort()->values()->all())
+        ->toBe(array_map(fn (int $n) => sprintf('%s-%03d', $prefix, $n), range(1, WORKERS)))
+        ->and(Visit::query()->pluck('visit_number')->unique())->toHaveCount(WORKERS);
 });

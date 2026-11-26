@@ -36,6 +36,19 @@
                     </flux:sidebar.group>
                 @endif
 
+                @canany([\App\Enums\Permission::OperateQueue->value, \App\Enums\Permission::IssueTickets->value])
+                    <flux:sidebar.group :heading="__('Queue')" class="grid">
+                        @can(\App\Enums\Permission::OperateQueue->value)
+                            <flux:sidebar.item icon="megaphone" :href="route('workspace')" :current="request()->routeIs('workspace')" wire:navigate>
+                                {{ __('My counter') }}
+                            </flux:sidebar.item>
+                        @endcan
+                        <flux:sidebar.item icon="queue-list" :href="route('queues.index')" :current="request()->routeIs('queues.*')" wire:navigate>
+                            {{ __('Queue board') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcanany
+
                 @php
                     $adminLinks = collect([
                         ['model' => \App\Models\Department::class, 'route' => 'departments', 'icon' => 'building-office', 'label' => __('Departments')],

@@ -10,6 +10,8 @@ use App\Livewire\Departments\DepartmentForm;
 use App\Livewire\Departments\DepartmentIndex;
 use App\Livewire\Patients\PatientForm;
 use App\Livewire\Patients\PatientIndex;
+use App\Livewire\Queues\QueueBoard;
+use App\Livewire\Queues\Workspace;
 use App\Livewire\Reception\ReceptionDesk;
 use App\Livewire\Services\ServiceForm;
 use App\Livewire\Services\ServiceIndex;
@@ -20,6 +22,7 @@ use App\Models\Appointment;
 use App\Models\Counter;
 use App\Models\Department;
 use App\Models\Patient;
+use App\Models\QueueTicket;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Visit;
@@ -44,6 +47,9 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('appointments', AppointmentCalendar::class)->middleware('can:viewAny,'.Appointment::class)->name('appointments.index');
     Route::livewire('appointments/create', BookAppointmentForm::class)->middleware('can:create,'.Appointment::class)->name('appointments.create');
     Route::livewire('appointments/{appointment}', AppointmentDetail::class)->middleware('can:view,appointment')->name('appointments.show');
+
+    Route::livewire('queues', QueueBoard::class)->middleware('can:viewAny,'.QueueTicket::class)->name('queues.index');
+    Route::livewire('workspace', Workspace::class)->middleware('can:'.Permission::OperateQueue->value)->name('workspace');
 
     // Administration.
     Route::livewire('departments', DepartmentIndex::class)->middleware('can:viewAny,'.Department::class)->name('departments.index');

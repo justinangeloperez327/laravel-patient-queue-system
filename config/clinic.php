@@ -34,4 +34,21 @@ return [
         'booking_horizon_days' => (int) env('CLINIC_BOOKING_HORIZON_DAYS', 90),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Rules
+    |--------------------------------------------------------------------------
+    |
+    | Proposed defaults from docs/QUEUE_ENGINE.md; NOT yet approved by the
+    | clinic. A walk-in waiting longer than the safeguard is ordered together
+    | with appointment tickets. A called ticket may be recalled at most
+    | max_recalls times before it must be skipped or started.
+    |
+    */
+
+    'queue' => [
+        'walk_in_safeguard_minutes' => (int) env('CLINIC_WALK_IN_SAFEGUARD_MINUTES', 45),
+        'max_recalls' => (int) env('CLINIC_MAX_RECALLS', 3),
+    ],
+
 ];

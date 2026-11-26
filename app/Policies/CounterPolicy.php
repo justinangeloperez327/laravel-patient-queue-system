@@ -27,4 +27,15 @@ final class CounterPolicy
     {
         return $user->can(Permission::ManageCounters->value);
     }
+
+    /**
+     * Staff a counter and call patients there: queue operators assigned to
+     * the counter's department, on active counters only.
+     */
+    public function operate(User $user, Counter $counter): bool
+    {
+        return $counter->is_active
+            && $user->can(Permission::OperateQueue->value)
+            && $user->isAssignedToDepartment($counter->department_id);
+    }
 }

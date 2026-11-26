@@ -12,9 +12,13 @@
 declare(strict_types=1);
 
 use App\Actions\Appointments\BookAppointment;
+use App\Actions\Queues\CallNextTicket;
+use App\Actions\Queues\TransferTicket;
 use App\Actions\Visits\CheckInAppointment;
 use App\Actions\Visits\RegisterWalkIn;
 use App\Models\Appointment;
+use App\Models\Counter;
+use App\Models\QueueTicket;
 use App\Models\User;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
@@ -43,11 +47,13 @@ try {
     $result = match ($scenario) {
         'book' => app(BookAppointment::class)->handle($actor, $payload['input']),
         'check-in' => app(CheckInAppointment::class)->handle($actor, Appointment::query()->findOrFail($payload['appointment_id'])),
-        'walk-in' => app(RegisterWalkIn::class)->handle($actor, $payload['input']),
+        'walk-in' => app(RegisterWalkIn::class)->handle($actor, $payload['input'])->tickets()->latest('id')->firstOrFail(),
+        'call-next' => app(CallNextTicket::class)->handle($actor, Counter::query()->findOrFail($payload['counter_id']), $payload['key'] ?? null),
+        'transfer' => app(TransferTicket::class)->handle($actor, QueueTicket::query()->findOrFail($payload['ticket_id']), (int) $payload['service_id'], null, $payload['key'] ?? null),
         default => throw new InvalidArgumentException("Unknown scenario [{$scenario}]"),
     };
 
-    echo json_encode(['ok' => true, 'id' => $result->getKey(), 'number' => $result->getAttribute('appointment_number') ?? $result->getAttribute('visit_number')]), PHP_EOL;
+    echo json_encode(['ok' => true, 'id' => $result->getKey(), 'number' => $result->getAttribute('appointment_number') ?? $result->getAttribute('ticket_number') ?? $result->getAttribute('visit_number')]), PHP_EOL;
 } catch (ValidationException $exception) {
     echo json_encode(['ok' => false, 'errors' => $exception->errors()]), PHP_EOL;
 } catch (Throwable $exception) {

@@ -5,7 +5,7 @@ Dependencies: 02
 Implement calendar, provider availability, booking, rescheduling, cancellation, check-in and walk-in visits; integrate ticket issuance in phase 04.
 ## Implementation checklist
 - [x] Implement calendar, provider availability, booking, rescheduling, cancellation, check-in and walk-in visits
-- [ ] integrate ticket issuance in phase 04 (by design: check-in creates the visit only; phase 04 adds ticket issuance at reception)
+- [x] integrate ticket issuance in phase 04 (done in phase 04: check-in issues the first ticket in the same transaction)
 - [x] Implement applicable migrations/models: appointments, visits.
 - [x] Implement applicable Livewire screens/routes: /appointments, /reception, /visits.
 - [x] Enforce policies, validation and domain rules in linked architecture documents.

@@ -11,6 +11,7 @@ use Database\Factories\VisitFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One check-in of a patient. All tickets for that attendance (phase 04)
@@ -98,5 +99,13 @@ class Visit extends Model
     public function registeredBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registered_by');
+    }
+
+    /**
+     * @return HasMany<QueueTicket, $this>
+     */
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(QueueTicket::class)->orderBy('id');
     }
 }

@@ -3,7 +3,7 @@
 Single-clinic queue management with walk-ins, receptionist-booked appointments, optional triage, per-service tickets, visual and voice announcements, demographics and clinical notes.
 
 ## Status
-Phases 1 (foundation), 2 (master data) and 3 (appointments, reception check-in and visits) are implemented and verified locally, awaiting the first CI run. Phases 4–8 are pending. See the [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+Phase 1 (foundation) is merged. Phases 2 (master data), 3 (appointments, reception check-in and visits) and 4 (queue engine: tickets, counters, call/transfer workflow) are implemented and verified locally, awaiting their first CI run. Phases 5–8 are pending. See the [implementation plan](docs/IMPLEMENTATION_PLAN.md).
 
 ## Stack
 Laravel 13, PHP 8.3, Livewire 4, Flux, Tailwind 4, Fortify, Spatie Permission, PostgreSQL 16, Redis 7, Pest, Pint and Larastan.
@@ -54,7 +54,7 @@ Tests run against PostgreSQL (database `patient_queue_testing`, see `phpunit.xml
 composer test
 ```
 
-This runs Pint (check mode), Larastan and the Pest suite. The `Concurrency` test suite starts parallel PHP worker processes against the test database to prove duplicate bookings and check-ins are rejected under real contention.
+This runs Pint (check mode), Larastan and the Pest suite. The `Concurrency` test suite starts parallel PHP worker processes against the test database to prove duplicate bookings, check-ins, ticket numbers and queue claims are rejected under real contention.
 
 ## Documentation
 - [REQUIREMENTS](docs/REQUIREMENTS.md)
