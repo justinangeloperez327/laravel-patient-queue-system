@@ -3,12 +3,16 @@
 namespace App\Providers;
 
 use App\Models\AuditLog;
+use App\Models\DisplayDevice;
 use App\Models\Patient;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -29,6 +33,14 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->auditDeniedClinicalAccess();
+
+        // Pairing keys are long random strings, but limit guessing anyway.
+        RateLimiter::for('display-pairing', function (Request $request): Limit {
+            $device = $request->route('device');
+            $id = $device instanceof DisplayDevice ? (string) $device->getKey() : (is_scalar($device) ? (string) $device : '');
+
+            return Limit::perMinute(5)->by($request->ip().'|'.$id);
+        });
     }
 
     /**

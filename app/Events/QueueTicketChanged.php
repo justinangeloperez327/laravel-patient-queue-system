@@ -17,6 +17,7 @@ final class QueueTicketChanged implements ShouldDispatchAfterCommit
     use Dispatchable;
 
     public function __construct(
+        public readonly int $queueEventId,
         public readonly int $ticketId,
         public readonly int $serviceId,
         public readonly ?int $counterId,

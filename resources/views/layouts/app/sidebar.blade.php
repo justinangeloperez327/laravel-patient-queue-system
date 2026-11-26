@@ -54,6 +54,7 @@
                         ['model' => \App\Models\Department::class, 'route' => 'departments', 'icon' => 'building-office', 'label' => __('Departments')],
                         ['model' => \App\Models\Service::class, 'route' => 'services', 'icon' => 'clipboard-document-list', 'label' => __('Services')],
                         ['model' => \App\Models\Counter::class, 'route' => 'counters', 'icon' => 'computer-desktop', 'label' => __('Counters')],
+                        ['model' => \App\Models\DisplayDevice::class, 'route' => 'displays', 'icon' => 'tv', 'label' => __('Displays')],
                         ['model' => \App\Models\User::class, 'route' => 'staff', 'icon' => 'identification', 'label' => __('Staff')],
                     ])->filter(fn (array $link): bool => auth()->user()->can('viewAny', $link['model']));
                 @endphp

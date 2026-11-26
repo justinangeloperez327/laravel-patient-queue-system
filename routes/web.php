@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Controllers\DisplayController;
 use App\Livewire\Appointments\AppointmentCalendar;
 use App\Livewire\Appointments\AppointmentDetail;
 use App\Livewire\Appointments\BookAppointmentForm;
@@ -11,6 +12,8 @@ use App\Livewire\Counters\CounterForm;
 use App\Livewire\Counters\CounterIndex;
 use App\Livewire\Departments\DepartmentForm;
 use App\Livewire\Departments\DepartmentIndex;
+use App\Livewire\Displays\DisplayForm;
+use App\Livewire\Displays\DisplayIndex;
 use App\Livewire\Patients\PatientForm;
 use App\Livewire\Patients\PatientIndex;
 use App\Livewire\Queues\QueueBoard;
@@ -24,12 +27,22 @@ use App\Livewire\Visits\VisitIndex;
 use App\Models\Appointment;
 use App\Models\Counter;
 use App\Models\Department;
+use App\Models\DisplayDevice;
 use App\Models\Patient;
 use App\Models\QueueTicket;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Support\Facades\Route;
+
+// Public waiting-room displays: authenticated by a paired device key, not by staff login.
+Route::prefix('display/{device}')->name('display.')->controller(DisplayController::class)->group(function () {
+    Route::get('/', 'show')->name('show');
+    Route::post('pair', 'pair')->middleware('throttle:display-pairing')->name('pair');
+    Route::post('unpair', 'unpair')->name('unpair');
+    Route::get('snapshot', 'snapshot')->middleware('throttle:120,1')->name('snapshot');
+    Route::post('broadcasting/auth', 'authorizeChannel')->middleware('throttle:60,1')->name('auth');
+});
 
 // Staff-only application: the root sends guests to login and staff to the dashboard.
 Route::redirect('/', '/dashboard')->name('home');
@@ -69,6 +82,10 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('counters', CounterIndex::class)->middleware('can:viewAny,'.Counter::class)->name('counters.index');
     Route::livewire('counters/create', CounterForm::class)->middleware('can:create,'.Counter::class)->name('counters.create');
     Route::livewire('counters/{counter}/edit', CounterForm::class)->middleware('can:update,counter')->name('counters.edit');
+
+    Route::livewire('displays', DisplayIndex::class)->middleware('can:viewAny,'.DisplayDevice::class)->name('displays.index');
+    Route::livewire('displays/create', DisplayForm::class)->middleware('can:create,'.DisplayDevice::class)->name('displays.create');
+    Route::livewire('displays/{device}/edit', DisplayForm::class)->middleware('can:update,device')->name('displays.edit');
 
     Route::livewire('staff', StaffIndex::class)->middleware('can:viewAny,'.User::class)->name('staff.index');
     Route::livewire('staff/create', StaffForm::class)->middleware('can:create,'.User::class)->name('staff.create');
