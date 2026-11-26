@@ -1,9 +1,9 @@
 # Implementation plan
-Phase 1 in progress (implemented; awaiting first CI run); phases 2–8 pending. Update checklists after tested implementation.
+Phases 1–3 implemented and verified locally; all await the first CI run. Phases 4–8 pending. Update checklists after tested implementation.
 
 - [ ] [Phase 1: Project foundation](phases/PHASE_01_FOUNDATION.md) — depends on None — in progress
-- [ ] [Phase 2: Master data](phases/PHASE_02_MASTER_DATA.md) — depends on 01
-- [ ] [Phase 3: Appointments and reception](phases/PHASE_03_APPOINTMENTS.md) — depends on 02
+- [ ] [Phase 2: Master data](phases/PHASE_02_MASTER_DATA.md) — depends on 01 — implemented, awaiting CI
+- [ ] [Phase 3: Appointments and reception](phases/PHASE_03_APPOINTMENTS.md) — depends on 02 — implemented, awaiting CI
 - [ ] [Phase 4: Queue engine](phases/PHASE_04_QUEUE_ENGINE.md) — depends on 03
 - [ ] [Phase 5: Clinical documentation](phases/PHASE_05_CLINICAL_RECORDS.md) — depends on 04
 - [ ] [Phase 6: Real-time public display](phases/PHASE_06_REALTIME_DISPLAY.md) — depends on 04, 05
