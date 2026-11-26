@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Actions\Appointments\BookAppointment;
 use App\Enums\DayOfWeek;
 use App\Enums\Role;
 use App\Enums\TriageMode;
+use App\Models\Appointment;
 use App\Models\Counter;
 use App\Models\Department;
 use App\Models\Patient;
@@ -14,6 +16,8 @@ use App\Models\ProviderSchedule;
 use App\Models\Service;
 use App\Models\StaffAssignment;
 use App\Models\User;
+use App\Services\ProviderAvailability;
+use App\Support\ClinicTime;
 use Illuminate\Database\Seeder;
 
 /**
@@ -107,6 +111,39 @@ final class DemoMasterDataSeeder extends Seeder
 
         if ($receptionist !== null && Patient::query()->doesntExist()) {
             Patient::factory()->count(12)->create(['registered_by' => $receptionist->id]);
+        }
+
+        if ($receptionist !== null && $doctor !== null && Appointment::query()->doesntExist()) {
+            $this->bookDemoAppointments($receptionist, $doctor, $consultation);
+        }
+    }
+
+    /**
+     * Book the next few free slots through the real booking action.
+     */
+    private function bookDemoAppointments(User $receptionist, User $doctor, Service $consultation): void
+    {
+        $availability = app(ProviderAvailability::class);
+        $book = app(BookAppointment::class);
+        $patients = Patient::query()->orderBy('id')->limit(4)->get();
+        $day = ClinicTime::today();
+
+        for ($i = 0; $i < 14 && $patients->isNotEmpty(); $i++, $day = $day->addDay()) {
+            foreach (array_slice($availability->slots($doctor, $consultation, $day), 0, 2) as $slot) {
+                $patient = $patients->shift();
+
+                if ($patient === null) {
+                    return;
+                }
+
+                $book->handle($receptionist, [
+                    'patient_id' => $patient->id,
+                    'service_id' => $consultation->id,
+                    'provider_id' => $doctor->id,
+                    'scheduled_start_at' => $slot->key(),
+                    'reason_for_visit' => 'Follow-up',
+                ]);
+            }
         }
     }
 }

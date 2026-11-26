@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Sex;
+use Carbon\CarbonImmutable;
 use Database\Factories\PatientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Patient demographics. Identifiable data: never broadcast, log or expose
@@ -23,7 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string $first_name
  * @property string|null $middle_name
  * @property string $last_name
- * @property Carbon $date_of_birth
+ * @property CarbonImmutable $date_of_birth
  * @property Sex|null $sex
  * @property string|null $phone
  * @property string|null $email
@@ -33,8 +34,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $emergency_contact_phone
  * @property int $registered_by
  * @property bool $is_active
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  * @property-read User $registeredBy
  */
 #[Fillable([
@@ -87,6 +88,22 @@ class Patient extends Model
     public function registeredBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registered_by');
+    }
+
+    /**
+     * @return HasMany<Appointment, $this>
+     */
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    /**
+     * @return HasMany<Visit, $this>
+     */
+    public function visits(): HasMany
+    {
+        return $this->hasMany(Visit::class);
     }
 
     public function fullName(): string

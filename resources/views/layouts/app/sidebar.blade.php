@@ -17,13 +17,24 @@
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
-                @can('viewAny', \App\Models\Patient::class)
+                @php
+                    $receptionLinks = collect([
+                        ['ability' => 'create', 'model' => \App\Models\Visit::class, 'route' => 'reception', 'match' => 'reception', 'icon' => 'inbox-arrow-down', 'label' => __('Reception desk')],
+                        ['ability' => 'viewAny', 'model' => \App\Models\Appointment::class, 'route' => 'appointments.index', 'match' => 'appointments.*', 'icon' => 'calendar-days', 'label' => __('Appointments')],
+                        ['ability' => 'viewAny', 'model' => \App\Models\Visit::class, 'route' => 'visits.index', 'match' => 'visits.*', 'icon' => 'clipboard-document-check', 'label' => __('Visits')],
+                        ['ability' => 'viewAny', 'model' => \App\Models\Patient::class, 'route' => 'patients.index', 'match' => 'patients.*', 'icon' => 'users', 'label' => __('Patients')],
+                    ])->filter(fn (array $link): bool => auth()->user()->can($link['ability'], $link['model']));
+                @endphp
+
+                @if ($receptionLinks->isNotEmpty())
                     <flux:sidebar.group :heading="__('Reception')" class="grid">
-                        <flux:sidebar.item icon="users" :href="route('patients.index')" :current="request()->routeIs('patients.*')" wire:navigate>
-                            {{ __('Patients') }}
-                        </flux:sidebar.item>
+                        @foreach ($receptionLinks as $link)
+                            <flux:sidebar.item :icon="$link['icon']" :href="route($link['route'])" :current="request()->routeIs($link['match'])" wire:navigate>
+                                {{ $link['label'] }}
+                            </flux:sidebar.item>
+                        @endforeach
                     </flux:sidebar.group>
-                @endcan
+                @endif
 
                 @php
                     $adminLinks = collect([
