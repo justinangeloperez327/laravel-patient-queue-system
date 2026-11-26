@@ -1,27 +1,27 @@
 <?php
 
-namespace Tests\Feature;
-
+use App\Enums\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class DashboardTest extends TestCase
-{
-    use RefreshDatabase;
+test('guests are redirected to the login page', function () {
+    $this->get(route('dashboard'))->assertRedirect(route('login'));
+});
 
-    public function test_guests_are_redirected_to_the_login_page(): void
-    {
-        $response = $this->get(route('dashboard'));
-        $response->assertRedirect(route('login'));
-    }
+test('the root url sends staff to the dashboard', function () {
+    $this->get('/')->assertRedirect('/dashboard');
+});
 
-    public function test_authenticated_users_can_visit_the_dashboard(): void
-    {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+test('staff with any role can visit the dashboard', function (Role $role) {
+    $user = User::factory()->withRole($role)->create();
 
-        $response = $this->get(route('dashboard'));
-        $response->assertOk();
-    }
-}
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee($role->label());
+})->with(Role::cases());
+
+test('users without a role are denied the dashboard', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('dashboard'))
+        ->assertForbidden();
+});

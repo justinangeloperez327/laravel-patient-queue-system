@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -56,5 +57,25 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
         ]);
+    }
+
+    /**
+     * Indicate that the staff account has been deactivated.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Assign one or more roles after creation. Roles must already be seeded.
+     */
+    public function withRole(Role ...$roles): static
+    {
+        return $this->afterCreating(function (User $user) use ($roles): void {
+            $user->syncRoles(array_map(static fn (Role $role): string => $role->value, $roles));
+        });
     }
 }

@@ -1,13 +1,14 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/livewire-starter-kit",
+    "name": "justinangeloperez327/laravel-patient-queue-system",
     "type": "project",
-    "description": "The official Laravel starter kit for Livewire.",
+    "description": "Single-clinic patient queue management system.",
     "keywords": [
         "laravel",
-        "framework"
+        "livewire",
+        "clinic",
+        "queue"
     ],
-    "license": "MIT",
     "require": {
         "php": "^8.3",
         "laravel/fortify": "^1.37.2",
@@ -73,7 +74,7 @@
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
-            "@php artisan test"
+            "@php artisan test --compact"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
@@ -99,8 +100,7 @@
         "laravel": {
             "dont-discover": [],
             "installer": {
-                "post-create-project": [
-                ]
+                "post-create-project": []
             }
         }
     },

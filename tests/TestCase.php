@@ -2,15 +2,18 @@
 
 namespace Tests;
 
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Laravel\Fortify\Features;
 
 abstract class TestCase extends BaseTestCase
 {
-    protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void
-    {
-        if (! Features::enabled($feature)) {
-            $this->markTestSkipped($message ?? "Fortify feature [{$feature}] is not enabled.");
-        }
-    }
+    /**
+     * Seed the role and permission catalogue before each test that refreshes the database.
+     */
+    protected bool $seed = true;
+
+    /**
+     * @var class-string
+     */
+    protected string $seeder = RolesAndPermissionsSeeder::class;
 }

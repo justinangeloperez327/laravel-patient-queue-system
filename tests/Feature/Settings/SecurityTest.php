@@ -1,165 +1,135 @@
 <?php
 
-namespace Tests\Feature\Settings;
-
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Fortify\Features;
 use Livewire\Livewire;
-use Tests\TestCase;
 
-class SecurityTest extends TestCase
-{
-    use RefreshDatabase;
+test('security settings page can be rendered', function () {
+    $user = User::factory()->create();
 
-    protected function setUp(): void
-    {
-        parent::setUp();
+    $response = $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'));
 
-        $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
+    $response->assertOk();
 
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-        ]);
-    }
+    $response->assertSee('Two-factor authentication');
+    $response->assertSee('Enable 2FA');
+});
 
-    public function test_security_settings_page_can_be_rendered(): void
-    {
-        $user = User::factory()->create();
+test('security settings page requires password confirmation when enabled', function () {
+    $user = User::factory()->create();
 
-        $response = $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
-            ->get(route('security.edit'));
+    $response = $this->actingAs($user)
+        ->get(route('security.edit'));
 
-        $response->assertOk();
+    $response->assertRedirect(route('password.confirm'));
+});
 
-        $response->assertSee('Two-factor authentication');
-        $response->assertSee('Enable 2FA');
-    }
+test('security settings page renders without two factor when feature is disabled', function () {
+    config(['fortify.features' => []]);
 
-    public function test_security_settings_page_requires_password_confirmation_when_enabled(): void
-    {
-        $user = User::factory()->create();
+    $user = User::factory()->create();
 
-        $response = $this->actingAs($user)
-            ->get(route('security.edit'));
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertSee('Update password')
+        ->assertDontSee('Manage your passkeys for passwordless sign-in')
+        ->assertDontSee('Add a passkey to sign in without a password')
+        ->assertDontSee('Two-factor authentication');
+});
 
-        $response->assertRedirect(route('password.confirm'));
-    }
+test('two factor authentication disabled when confirmation abandoned between requests', function () {
+    $user = User::factory()->create();
 
-    public function test_security_settings_page_renders_without_two_factor_when_feature_is_disabled(): void
-    {
-        config(['fortify.features' => []]);
+    $user->forceFill([
+        'two_factor_secret' => encrypt('test-secret'),
+        'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
+        'two_factor_confirmed_at' => null,
+    ])->save();
 
-        $user = User::factory()->create();
+    $this->actingAs($user);
 
-        $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
-            ->get(route('security.edit'))
-            ->assertOk()
-            ->assertSee('Update password')
-            ->assertDontSee('Manage your passkeys for passwordless sign-in')
-            ->assertDontSee('Add a passkey to sign in without a password')
-            ->assertDontSee('Two-factor authentication');
-    }
+    $component = Livewire::test('pages::settings.security');
 
-    public function test_two_factor_authentication_disabled_when_confirmation_abandoned_between_requests(): void
-    {
-        $user = User::factory()->create();
+    $component->assertSet('twoFactorEnabled', false);
 
-        $user->forceFill([
-            'two_factor_secret' => encrypt('test-secret'),
-            'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
-            'two_factor_confirmed_at' => null,
-        ])->save();
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id,
+        'two_factor_secret' => null,
+        'two_factor_recovery_codes' => null,
+    ]);
+});
 
-        $this->actingAs($user);
+test('two factor setup does not reveal the secret when already enabled', function () {
+    $user = User::factory()->create();
 
-        $component = Livewire::test('pages::settings.security');
+    $user->forceFill([
+        'two_factor_secret' => encrypt('test-secret'),
+        'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
+        'two_factor_confirmed_at' => now(),
+    ])->save();
 
-        $component->assertSet('twoFactorEnabled', false);
+    $this->actingAs($user);
 
-        $this->assertDatabaseHas('users', [
-            'id' => $user->id,
-            'two_factor_secret' => null,
-            'two_factor_recovery_codes' => null,
-        ]);
-    }
+    Livewire::test('pages::settings.two-factor-setup-modal', ['requiresConfirmation' => true])
+        ->call('startTwoFactorSetup')
+        ->assertDispatched('two-factor-enabled')
+        ->assertSet('manualSetupKey', '')
+        ->assertSet('qrCodeSvg', '');
 
-    public function test_two_factor_setup_does_not_reveal_the_secret_when_already_enabled(): void
-    {
-        $user = User::factory()->create();
+    $this->assertSame('test-secret', decrypt($user->refresh()->two_factor_secret));
+});
 
-        $user->forceFill([
-            'two_factor_secret' => encrypt('test-secret'),
-            'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
-            'two_factor_confirmed_at' => now(),
-        ])->save();
+test('recovery codes are only loaded when requested', function () {
+    $user = User::factory()->create();
 
-        $this->actingAs($user);
+    $user->forceFill([
+        'two_factor_secret' => encrypt('test-secret'),
+        'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
+        'two_factor_confirmed_at' => now(),
+    ])->save();
 
-        Livewire::test('pages::settings.two-factor-setup-modal', ['requiresConfirmation' => true])
-            ->call('startTwoFactorSetup')
-            ->assertDispatched('two-factor-enabled')
-            ->assertSet('manualSetupKey', '')
-            ->assertSet('qrCodeSvg', '');
+    $this->actingAs($user);
 
-        $this->assertSame('test-secret', decrypt($user->refresh()->two_factor_secret));
-    }
+    Livewire::test('pages::settings.two-factor.recovery-codes')
+        ->assertSet('recoveryCodes', [])
+        ->call('viewRecoveryCodes')
+        ->assertSet('recoveryCodes', ['code1', 'code2']);
+});
 
-    public function test_recovery_codes_are_only_loaded_when_requested(): void
-    {
-        $user = User::factory()->create();
+test('password can be updated', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password'),
+    ]);
 
-        $user->forceFill([
-            'two_factor_secret' => encrypt('test-secret'),
-            'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
-            'two_factor_confirmed_at' => now(),
-        ])->save();
+    $this->actingAs($user);
 
-        $this->actingAs($user);
+    $response = Livewire::test('pages::settings.security')
+        ->set('current_password', 'password')
+        ->set('password', 'new-password')
+        ->set('password_confirmation', 'new-password')
+        ->call('updatePassword');
 
-        Livewire::test('pages::settings.two-factor.recovery-codes')
-            ->assertSet('recoveryCodes', [])
-            ->call('viewRecoveryCodes')
-            ->assertSet('recoveryCodes', ['code1', 'code2']);
-    }
+    $response->assertHasNoErrors();
 
-    public function test_password_can_be_updated(): void
-    {
-        $user = User::factory()->create([
-            'password' => Hash::make('password'),
-        ]);
+    $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
+});
 
-        $this->actingAs($user);
+test('correct password must be provided to update password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password'),
+    ]);
 
-        $response = Livewire::test('pages::settings.security')
-            ->set('current_password', 'password')
-            ->set('password', 'new-password')
-            ->set('password_confirmation', 'new-password')
-            ->call('updatePassword');
+    $this->actingAs($user);
 
-        $response->assertHasNoErrors();
+    $response = Livewire::test('pages::settings.security')
+        ->set('current_password', 'wrong-password')
+        ->set('password', 'new-password')
+        ->set('password_confirmation', 'new-password')
+        ->call('updatePassword');
 
-        $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
-    }
-
-    public function test_correct_password_must_be_provided_to_update_password(): void
-    {
-        $user = User::factory()->create([
-            'password' => Hash::make('password'),
-        ]);
-
-        $this->actingAs($user);
-
-        $response = Livewire::test('pages::settings.security')
-            ->set('current_password', 'wrong-password')
-            ->set('password', 'new-password')
-            ->set('password_confirmation', 'new-password')
-            ->call('updatePassword');
-
-        $response->assertHasErrors(['current_password']);
-    }
-}
+    $response->assertHasErrors(['current_password']);
+});

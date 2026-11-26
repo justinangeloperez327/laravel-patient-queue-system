@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -28,6 +30,7 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureActions();
+        $this->configureAuthentication();
         $this->configureViews();
         $this->configureRateLimiting();
         $this->configurePasswordConfirmation();
@@ -49,6 +52,30 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureActions(): void
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+    }
+
+    /**
+     * Only active staff accounts may authenticate. Inactive accounts receive
+     * the same generic failure as invalid credentials.
+     */
+    private function configureAuthentication(): void
+    {
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $email = $request->input(Fortify::username());
+
+            if (! is_string($email)) {
+                return null;
+            }
+
+            $user = User::query()->where('email', mb_strtolower(trim($email)))->first();
+            $password = $request->input('password');
+
+            if ($user === null || ! is_string($password) || ! Hash::check($password, $user->password)) {
+                return null;
+            }
+
+            return $user->isActive() ? $user : null;
+        });
     }
 
     /**
