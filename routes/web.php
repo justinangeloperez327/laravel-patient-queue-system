@@ -4,6 +4,9 @@ use App\Enums\Permission;
 use App\Livewire\Appointments\AppointmentCalendar;
 use App\Livewire\Appointments\AppointmentDetail;
 use App\Livewire\Appointments\BookAppointmentForm;
+use App\Livewire\Clinical\ConsultationEncounter;
+use App\Livewire\Clinical\PatientRecord;
+use App\Livewire\Clinical\TriageEncounter;
 use App\Livewire\Counters\CounterForm;
 use App\Livewire\Counters\CounterIndex;
 use App\Livewire\Departments\DepartmentForm;
@@ -40,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('patients', PatientIndex::class)->middleware('can:viewAny,'.Patient::class)->name('patients.index');
     Route::livewire('patients/create', PatientForm::class)->middleware('can:create,'.Patient::class)->name('patients.create');
     Route::livewire('patients/{patient}/edit', PatientForm::class)->middleware('can:update,patient')->name('patients.edit');
+    Route::livewire('patients/{patient}', PatientRecord::class)->middleware('can:viewRecord,patient')->name('patients.show');
 
     Route::livewire('reception', ReceptionDesk::class)->middleware('can:create,'.Visit::class)->name('reception');
     Route::livewire('visits', VisitIndex::class)->middleware('can:viewAny,'.Visit::class)->name('visits.index');
@@ -50,6 +54,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::livewire('queues', QueueBoard::class)->middleware('can:viewAny,'.QueueTicket::class)->name('queues.index');
     Route::livewire('workspace', Workspace::class)->middleware('can:'.Permission::OperateQueue->value)->name('workspace');
+    Route::livewire('workspace/triage', TriageEncounter::class)->middleware('can:'.Permission::PerformTriage->value)->name('workspace.triage');
+    Route::livewire('workspace/consultation', ConsultationEncounter::class)->middleware('can:'.Permission::ViewClinicalHistory->value)->name('workspace.consultation');
 
     // Administration.
     Route::livewire('departments', DepartmentIndex::class)->middleware('can:viewAny,'.Department::class)->name('departments.index');

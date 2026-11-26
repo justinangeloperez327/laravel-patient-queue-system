@@ -1,15 +1,15 @@
 # Phase 01 — Project foundation
-Status: In progress (implementation complete; awaiting first CI run and Docker app-image verification)
+Status: Complete — CI green on `main`. Open item: Docker Compose `app`/`queue` image build still to be verified on a workstation.
 Dependencies: None
 ## Objective and scope
 Scaffold Laravel with Livewire/Blade; configure PostgreSQL, Redis, Docker Compose, Fortify, RBAC, layouts, Pint, Pest, Larastan and CI.
 ## Implementation checklist
 - [x] Scaffold Laravel with Livewire/Blade
-- [ ] configure PostgreSQL, Redis, Docker Compose, Fortify, RBAC, layouts, Pint, Pest, Larastan and CI
+- [x] configure PostgreSQL, Redis, Docker Compose, Fortify, RBAC, layouts, Pint, Pest, Larastan and CI (except the open item below)
   - [x] PostgreSQL (default connection, UTC session timezone, timestamptz), Redis (cache, sessions, queues), Fortify, RBAC, layouts, Pint, Pest, Larastan
   - [x] Docker Compose `pgsql` and `redis` services verified (suite passed against them, migrations and seeders ran)
   - [ ] Docker Compose `app`/`queue` image build — not verifiable in the development sandbox (no plain-HTTP egress for apt); verify on a workstation
-  - [ ] GitHub Actions workflow (`.github/workflows/tests.yml`) — written; first run pending
+  - [x] GitHub Actions workflow (`.github/workflows/tests.yml`) — green on pull requests and `main`
 - [x] Implement applicable migrations/models: users, roles, permissions and framework tables.
 - [x] Implement applicable Livewire screens/routes: /login, /dashboard; shared layout.
 - [x] Enforce policies, validation and domain rules in linked architecture documents.
@@ -31,4 +31,4 @@ Authentication, authorization, migrations and CI pass; no public staff registrat
 - Test suite also passed against the Docker Compose `pgsql`/`redis` services; `migrate:fresh --seed` succeeded there.
 - Browser smoke test (Playwright): `/` → `/login`; `/register` → 404; receptionist login lands on `/dashboard` showing the assigned role.
 ## Completion
-- [ ] Acceptance criteria verified and implementation plan updated.
+- [x] Acceptance criteria verified and implementation plan updated. CI (GitHub Actions `tests`) passed on the pull requests and on `main` for #1, #2 and #3 (runs 1–6, 2026-11-26), including the multi-process concurrency suite against PostgreSQL 16.

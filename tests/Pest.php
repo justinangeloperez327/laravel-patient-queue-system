@@ -3,6 +3,8 @@
 use App\Actions\Appointments\BookAppointment;
 use App\Actions\Queues\CallNextTicket;
 use App\Actions\Queues\OpenCounterSession;
+use App\Actions\Queues\StartTicket;
+use App\Actions\Queues\TransferTicket;
 use App\Actions\Visits\RegisterWalkIn;
 use App\Enums\DayOfWeek;
 use App\Enums\Role;
@@ -228,4 +230,34 @@ function callNext(User $user, Counter $counter, ?string $key = null): QueueTicke
 function act(string $action, User $user, QueueTicket $ticket, ?string $key = null): QueueTicket
 {
     return app($action)->handle($user, $ticket, $key);
+}
+
+/**
+ * queueFixture() plus a walk-in for consultation (routed to triage) whose
+ * triage ticket the nurse is now serving at TRIAGE-1.
+ *
+ * @return array<string, mixed>
+ */
+function clinicalFixture(): array
+{
+    $fixture = queueFixture();
+    $fixture['patient'] = Patient::factory()->create(['last_name' => 'Synthetic', 'first_name' => 'Pat']);
+    walkInTicket($fixture, $fixture['services']['c'], $fixture['patient']);
+    openCounter($fixture['nurse'], $fixture['counters']['triage']);
+    $fixture['triageTicket'] = act(StartTicket::class, $fixture['nurse'], callNext($fixture['nurse'], $fixture['counters']['triage']));
+
+    return $fixture;
+}
+
+/**
+ * Transfer the triage ticket to consultation and have the doctor serve it at ROOM-1.
+ *
+ * @param  array<string, mixed>  $fixture
+ */
+function toConsultation(array $fixture): QueueTicket
+{
+    app(TransferTicket::class)->handle($fixture['nurse'], $fixture['triageTicket'], $fixture['services']['c']->id);
+    openCounter($fixture['doctor'], $fixture['counters']['room1']);
+
+    return act(StartTicket::class, $fixture['doctor'], callNext($fixture['doctor'], $fixture['counters']['room1']));
 }

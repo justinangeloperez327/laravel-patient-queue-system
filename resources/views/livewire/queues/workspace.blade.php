@@ -57,6 +57,12 @@
                         <flux:button wire:click="recall" wire:loading.attr="disabled" icon="speaker-wave">{{ __('Recall') }}</flux:button>
                         <flux:button wire:click="skip" wire:loading.attr="disabled">{{ __('Skip (no-show)') }}</flux:button>
                     @else
+                        @can(\App\Enums\Permission::PerformTriage->value)
+                            <flux:button :href="route('workspace.triage')" wire:navigate icon="clipboard-document-check">{{ __('Triage') }}</flux:button>
+                        @endcan
+                        @can(\App\Enums\Permission::ViewClinicalHistory->value)
+                            <flux:button :href="route('workspace.consultation')" wire:navigate icon="document-text">{{ __('Notes & vitals') }}</flux:button>
+                        @endcan
                         @can('complete', $current)
                             <flux:button variant="primary" wire:click="complete" wire:loading.attr="disabled" icon="check">{{ __('Complete') }}</flux:button>
                         @endcan

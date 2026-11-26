@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Queues;
 
+use App\Enums\ClinicalPriority;
 use App\Enums\QueueEventType;
 use App\Enums\QueueTicketStatus;
 use App\Models\QueueTicket;
@@ -33,17 +34,34 @@ final class TransferTicket
         private readonly QueueEventRecorder $events,
     ) {}
 
-    public function handle(User $actor, QueueTicket $ticket, int $targetServiceId, ?string $remarks = null, ?string $idempotencyKey = null): QueueTicket
-    {
+    /**
+     * @param  ClinicalPriority|null  $priority  Optional clinical priority for the next ticket (e.g. set at triage); requires changePriority.
+     */
+    public function handle(
+        User $actor,
+        QueueTicket $ticket,
+        int $targetServiceId,
+        ?string $remarks = null,
+        ?string $idempotencyKey = null,
+        ?ClinicalPriority $priority = null,
+        ?string $priorityReason = null,
+    ): QueueTicket {
         Gate::forUser($actor)->authorize('transfer', $ticket);
         $key = $this->optionalKey($idempotencyKey);
 
-        Validator::make(['service_id' => $targetServiceId, 'remarks' => $remarks], [
+        if ($priority !== null) {
+            Gate::forUser($actor)->authorize('changePriority', $ticket);
+        }
+
+        $priorityReason = $priorityReason === null || trim($priorityReason) === '' ? null : trim($priorityReason);
+
+        Validator::make(['service_id' => $targetServiceId, 'remarks' => $remarks, 'priority_reason' => $priorityReason], [
             'service_id' => ['required', 'integer', Rule::exists('services', 'id')],
             'remarks' => ['nullable', 'string', 'max:255'],
-        ])->validate();
+            'priority_reason' => [$priority !== null && $priority !== ClinicalPriority::Routine ? 'required' : 'nullable', 'nullable', 'string', 'max:255'],
+        ], ['priority_reason.required' => __('Give a reason for raising clinical priority.')])->validate();
 
-        return ConstraintViolation::guard(fn (): QueueTicket => DB::transaction(function () use ($actor, $ticket, $targetServiceId, $remarks, $key): QueueTicket {
+        return ConstraintViolation::guard(fn (): QueueTicket => DB::transaction(function () use ($actor, $ticket, $targetServiceId, $remarks, $key, $priority, $priorityReason): QueueTicket {
             $locked = $this->lockTicket($ticket);
 
             if (($replayed = $this->events->replay($key)) !== null) {
@@ -71,11 +89,18 @@ final class TransferTicket
                 actor: $actor,
                 visit: $visit,
                 service: $target,
-                priority: $locked->priority,
-                priorityReason: $locked->priority_reason,
+                priority: $priority ?? $locked->priority,
+                priorityReason: $priority !== null ? $priorityReason : $locked->priority_reason,
                 transferredFrom: $locked,
                 remarks: $remarks,
             );
+
+            if ($priority !== null && $priority !== $locked->priority) {
+                $this->events->record($next, QueueEventType::PriorityChanged, $actor, null, $priorityReason, [
+                    'from' => $locked->priority->value,
+                    'to' => $priority->value,
+                ]);
+            }
 
             $this->events->record($locked, QueueEventType::Transferred, $actor, $previous, $remarks, [
                 'to_service_id' => $target->id,
