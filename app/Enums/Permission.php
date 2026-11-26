@@ -22,9 +22,13 @@ enum Permission: string
     case ManageCounters = 'counters.manage';
     case ManageSettings = 'settings.manage';
     case ManageDisplays = 'displays.manage';
+    case ManageSchedules = 'schedules.manage';
     case ViewOperationalReports = 'reports.operational.view';
 
-    // Reception
+    // Reception (patient demographics are receptionist-only in this phase;
+    // clinical access to patient records arrives with care-relationship
+    // scoping in phase 5)
+    case ViewPatients = 'patients.view';
     case RegisterPatients = 'patients.register';
     case UpdatePatientDemographics = 'patients.demographics.update';
     case ManageAppointments = 'appointments.manage';

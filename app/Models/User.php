@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -61,6 +65,66 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->is_active;
+    }
+
+    /**
+     * @return HasMany<StaffAssignment, $this>
+     */
+    public function staffAssignments(): HasMany
+    {
+        return $this->hasMany(StaffAssignment::class);
+    }
+
+    /**
+     * Departments the user is actively assigned to (department scope).
+     *
+     * @return BelongsToMany<Department, $this>
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->belongsToMany(Department::class, 'staff_assignments')
+            ->wherePivot('is_active', true)
+            ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<ProviderSchedule, $this>
+     */
+    public function providerSchedules(): HasMany
+    {
+        return $this->hasMany(ProviderSchedule::class, 'provider_id');
+    }
+
+    /**
+     * @return HasMany<ProviderScheduleException, $this>
+     */
+    public function scheduleExceptions(): HasMany
+    {
+        return $this->hasMany(ProviderScheduleException::class, 'provider_id');
+    }
+
+    public function isAssignedToDepartment(int $departmentId): bool
+    {
+        return $this->departments()->whereKey($departmentId)->exists();
+    }
+
+    /**
+     * Whether the user holds a role that can deliver services (and so hold schedules).
+     */
+    public function isProvider(): bool
+    {
+        return $this->hasAnyRole(array_map(static fn (Role $role): string => $role->value, Role::providerRoles()));
+    }
+
+    /**
+     * Active staff holding a provider role.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeProviders(Builder $query): void
+    {
+        $query->where('is_active', true)
+            ->role(array_map(static fn (Role $role): string => $role->value, Role::providerRoles()));
     }
 
     /**

@@ -16,6 +16,33 @@
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+
+                @can('viewAny', \App\Models\Patient::class)
+                    <flux:sidebar.group :heading="__('Reception')" class="grid">
+                        <flux:sidebar.item icon="users" :href="route('patients.index')" :current="request()->routeIs('patients.*')" wire:navigate>
+                            {{ __('Patients') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
+
+                @php
+                    $adminLinks = collect([
+                        ['model' => \App\Models\Department::class, 'route' => 'departments', 'icon' => 'building-office', 'label' => __('Departments')],
+                        ['model' => \App\Models\Service::class, 'route' => 'services', 'icon' => 'clipboard-document-list', 'label' => __('Services')],
+                        ['model' => \App\Models\Counter::class, 'route' => 'counters', 'icon' => 'computer-desktop', 'label' => __('Counters')],
+                        ['model' => \App\Models\User::class, 'route' => 'staff', 'icon' => 'identification', 'label' => __('Staff')],
+                    ])->filter(fn (array $link): bool => auth()->user()->can('viewAny', $link['model']));
+                @endphp
+
+                @if ($adminLinks->isNotEmpty())
+                    <flux:sidebar.group :heading="__('Administration')" class="grid">
+                        @foreach ($adminLinks as $link)
+                            <flux:sidebar.item :icon="$link['icon']" :href="route($link['route'].'.index')" :current="request()->routeIs($link['route'].'.*')" wire:navigate>
+                                {{ $link['label'] }}
+                            </flux:sidebar.item>
+                        @endforeach
+                    </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />

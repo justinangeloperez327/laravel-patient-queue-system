@@ -28,6 +28,16 @@ enum Role: string
     }
 
     /**
+     * Roles that can deliver a service and therefore hold provider schedules.
+     *
+     * @return list<self>
+     */
+    public static function providerRoles(): array
+    {
+        return [self::Doctor, self::Nurse, self::ServiceStaff];
+    }
+
+    /**
      * @return list<Permission>
      */
     public function permissions(): array
@@ -41,10 +51,12 @@ enum Role: string
                 Permission::ManageCounters,
                 Permission::ManageSettings,
                 Permission::ManageDisplays,
+                Permission::ManageSchedules,
                 Permission::ViewOperationalReports,
             ],
             self::Receptionist => [
                 Permission::ViewDashboard,
+                Permission::ViewPatients,
                 Permission::RegisterPatients,
                 Permission::UpdatePatientDemographics,
                 Permission::ManageAppointments,

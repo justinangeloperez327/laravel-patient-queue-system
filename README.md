@@ -3,7 +3,7 @@
 Single-clinic queue management with walk-ins, receptionist-booked appointments, optional triage, per-service tickets, visual and voice announcements, demographics and clinical notes.
 
 ## Status
-Phase 1 (project foundation) is implemented and awaiting its first CI run. Phases 2–8 are pending. See the [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+Phases 1 (foundation) and 2 (master data: patients, departments, services, counters, staff and provider schedules) are implemented and verified locally, awaiting the first CI run. Phases 3–8 are pending. See the [implementation plan](docs/IMPLEMENTATION_PLAN.md).
 
 ## Stack
 Laravel 13, PHP 8.3, Livewire 4, Flux, Tailwind 4, Fortify, Spatie Permission, PostgreSQL 16, Redis 7, Pest, Pint and Larastan.
@@ -45,7 +45,7 @@ There is no public registration. Create staff accounts from the console (the pas
 php artisan staff:create --name="Clinic Admin" --email=admin@example.test --role=admin
 ```
 
-With `APP_ENV=local`, the seeder also creates one synthetic demo account per role (`admin@example.test`, `receptionist@example.test`, `nurse@example.test`, `doctor@example.test`, `service-staff@example.test`; password `password`).
+With `APP_ENV=local`, the seeder also creates a synthetic demo clinic (departments, services, counters, a doctor schedule, 12 patients) and one demo account per role (`admin@example.test`, `receptionist@example.test`, `nurse@example.test`, `doctor@example.test`, `service-staff@example.test`; password `password`).
 
 ## Checks
 Tests run against PostgreSQL (database `patient_queue_testing`, see `phpunit.xml`).
