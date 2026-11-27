@@ -4,7 +4,7 @@ There is **no automatic deployment** (AGENTS.md). Deploys are manual, reviewed, 
 
 ## Target architecture
 - **Application:** PHP 8.3 (FPM behind nginx or Caddy) serving Laravel over HTTPS only.
-- **Database:** PostgreSQL 16 with the `btree_gist` extension available, TLS required (`DB_SSLMODE=require` or stricter). The application role should not be a superuser; the extension and triggers are created by the migration role.
+- **Database:** PostgreSQL 16 with the `btree_gist` extension available, TLS required (`DB_SSLMODE=require` or stricter). The application role should not be a superuser; the extension and triggers are created by the migration role. Hosts that run backups or restores need `postgresql-client-16` (the client's major version must match the server's; see BACKUP_AND_RESTORE.md).
 - **Redis 7** for cache, sessions and queues.
 - **Long-running processes**, supervised (systemd or supervisord):
   - `php artisan queue:work --tries=3` — queued display broadcasts and mail;
