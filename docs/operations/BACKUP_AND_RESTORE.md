@@ -3,7 +3,7 @@
 ## Backups (`scripts/backup.sh`)
 - Uses `pg_dump --format=custom` piped through `openssl enc -aes-256-cbc -pbkdf2 -iter 200000`.
 - Produces `patient-queue-<UTC>.dump.enc`, a `.sha256` checksum, and a `.manifest.json` of row counts per table.
-- **Client tools must match the server's major version.** A newer `pg_dump` writes settings an older server rejects (for example, `pg_dump` 17 emits `SET transaction_timeout`, which PostgreSQL 16 cannot restore). Both scripts (`scripts/pg-tools.sh`) read the server version and use `PG_BIN_DIR`, then `/usr/lib/postgresql/<major>/bin`, then `PATH`, and refuse to run if the major versions differ. Install `postgresql-client-16` on the backup host. CI found this: the runner's default client was newer than the database.
+- **Client tools must match the server's major version.** A newer `pg_dump` writes settings an older server rejects (for example, `pg_dump` 17 emits `SET transaction_timeout`, which PostgreSQL 16 cannot restore). Both scripts (`scripts/pg-tools.sh`) read the server version and use `PG_BIN_DIR`, then `/usr/lib/postgresql/<major>/bin`, then `PATH`, and refuse to run if the major versions differ. Install `postgresql-client-16` on the backup host (from the PostgreSQL apt repository if the OS no longer packages 16). CI found this: the runner's default client was newer than the database.
 - Needs `BACKUP_DIR`, `BACKUP_PASSPHRASE_FILE` (mode 600) and the `PG*` connection variables.
 - Deletes local files older than `BACKUP_RETENTION_DAYS` (default 30, to be set from the approved retention policy).
 - Prints no data and never the passphrase.
