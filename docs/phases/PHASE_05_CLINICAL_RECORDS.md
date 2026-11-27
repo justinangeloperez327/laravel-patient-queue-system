@@ -1,5 +1,5 @@
 # Phase 05 — Clinical documentation
-Status: Implemented and verified locally; completion waits on CI
+Status: Complete — on `main`, CI green
 Dependencies: 04
 ## Objective and scope
 Implement optional triage, vital signs, SOAP drafts, signing, amendments and authorized history.
@@ -71,4 +71,4 @@ Signed notes immutable; clinical access audited; validate units and visit/ticket
   - The audit log showed each read and write with IDs only.
 - Fixed during verification: denied record views at the route level were not audited. A `Gate::after` hook now records them.
 ## Completion
-- [ ] Acceptance criteria verified and implementation plan updated.
+- [x] Acceptance criteria verified and implementation plan updated. CI (GitHub Actions `tests`, run 11 on `main`, 2026-11-27) passed: Pint, PHPStan, the display JS tests, migrations, the backup and restore drill and the full Pest suite (including the multi-process concurrency tests) on PostgreSQL 16.

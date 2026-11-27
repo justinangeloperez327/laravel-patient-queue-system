@@ -1,5 +1,5 @@
 # Phase 08 — Production readiness
-Status: Engineering work implemented and verified locally; release gate open (clinic and jurisdiction sign-off, production restore drill, CI on `main`)
+Status: Engineering work implemented and verified locally; CI green on `main`; release gate open (clinic and jurisdiction sign-off, production restore drill)
 Dependencies: 01–07
 ## Objective and scope
 Review privacy, threat model, access logs, backups, restore, monitoring, deployment and operational runbooks.
@@ -48,7 +48,7 @@ CI green, concurrency and authorization tests pass, restore drill succeeds, juri
   - Negative cases: a wrong passphrase, a tampered file (checksum mismatch) and a backup of a database whose audit trigger had been dropped all **FAILED** as intended. The encrypted file contains no readable text.
 - `clinic:preflight` on the development environment correctly reports 8 blocking issues: local env, debug, HTTP, insecure cookie, log mailer, 2FA not required, demo accounts, admin without 2FA.
 ## Release gate — open items (not engineering-completable)
-- [ ] CI green on `main` with phases 05–08 merged (the drill now runs in CI)
+- [x] CI green on `main` with phases 05–08 merged (run 11, 2026-11-27; the drill runs in CI). The first runs failed because the runner's newer `pg_dump` wrote a dump PostgreSQL 16 could not restore; the scripts now require client tools matching the server.
 - [ ] Restore drill on the production backup target, recorded in BACKUP_AND_RESTORE.md
 - [ ] Jurisdiction, data residency and applicable health-privacy law confirmed
 - [ ] Retention, deletion, patient-rights and breach-response policies approved

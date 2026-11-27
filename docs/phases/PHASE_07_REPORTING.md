@@ -1,5 +1,5 @@
 # Phase 07 — Dashboard and reporting
-Status: Implemented and verified locally; completion waits on CI
+Status: Complete — on `main`, CI green
 Dependencies: 04, 05, 06
 ## Objective and scope
 Implement operational KPIs, date/service/provider filters and authorized CSV/Excel exports.
@@ -57,4 +57,4 @@ Verify distinct patients vs visits, wait/service duration and no-show denominato
   - The dashboard and `/reports` showed visits 5, served 3 of 5, wait mean 28.7 / median 26.0 / p90 47.6 min, and service 6.0 / 6.0 / 6.8 min. These match a hand calculation from waits of 7, 26 and 53 minutes and service times of 5, 6 and 7 minutes.
   - The CSV and Excel downloads worked. The receptionist got 403 on `/reports` and on export.
 ## Completion
-- [ ] Acceptance criteria verified and implementation plan updated.
+- [x] Acceptance criteria verified and implementation plan updated. CI (GitHub Actions `tests`, run 11 on `main`, 2026-11-27) passed: Pint, PHPStan, the display JS tests, migrations, the backup and restore drill and the full Pest suite (including the multi-process concurrency tests) on PostgreSQL 16.

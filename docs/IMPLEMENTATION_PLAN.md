@@ -1,13 +1,13 @@
 # Implementation plan
-Phases 1–4 complete (merged, CI green). Phases 5–8 implemented and verified locally, awaiting CI. Phase 8's release gate (clinic, jurisdiction and production restore-drill sign-off) is open: no real patient data until it is closed. Update checklists after tested implementation.
+Phases 1–7 complete (on `main`, CI green). Phase 8 engineering is done and CI green. Phase 8's release gate (clinic, jurisdiction and production restore-drill sign-off) is open: no real patient data until it is closed. Update checklists after tested implementation.
 
 - [x] [Phase 1: Project foundation](phases/PHASE_01_FOUNDATION.md) — depends on None — complete (Docker app image still to verify)
 - [x] [Phase 2: Master data](phases/PHASE_02_MASTER_DATA.md) — depends on 01 — complete
 - [x] [Phase 3: Appointments and reception](phases/PHASE_03_APPOINTMENTS.md) — depends on 02 — complete
 - [x] [Phase 4: Queue engine](phases/PHASE_04_QUEUE_ENGINE.md) — depends on 03 — complete
-- [ ] [Phase 5: Clinical documentation](phases/PHASE_05_CLINICAL_RECORDS.md) — depends on 04 — implemented, awaiting CI
-- [ ] [Phase 6: Real-time public display](phases/PHASE_06_REALTIME_DISPLAY.md) — depends on 04, 05 — implemented, awaiting CI
-- [ ] [Phase 7: Dashboard and reporting](phases/PHASE_07_REPORTING.md) — depends on 04, 05, 06 — implemented, awaiting CI
+- [x] [Phase 5: Clinical documentation](phases/PHASE_05_CLINICAL_RECORDS.md) — depends on 04 — complete
+- [x] [Phase 6: Real-time public display](phases/PHASE_06_REALTIME_DISPLAY.md) — depends on 04, 05 — complete
+- [x] [Phase 7: Dashboard and reporting](phases/PHASE_07_REPORTING.md) — depends on 04, 05, 06 — complete
 - [ ] [Phase 8: Production readiness](phases/PHASE_08_PRODUCTION.md) — depends on 01–07 — engineering done; release gate open
 
 Release gate: all acceptance criteria, security review, restore drill and clinic policy approval. Reporting definitions: distinct patients, visits, eligible-to-start wait, start-to-end service duration, no-shows / eligible scheduled bookings. Exports permission-scoped.

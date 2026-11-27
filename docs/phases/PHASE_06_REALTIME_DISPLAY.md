@@ -1,5 +1,5 @@
 # Phase 06 — Real-time public display
-Status: Implemented and verified locally (including a live Reverb run); completion waits on CI
+Status: Complete — on `main`, CI green
 Dependencies: 04, 05
 ## Objective and scope
 Configure Reverb/Echo, after-commit broadcasts, restricted device credentials, reconnect snapshots and sequential browser speech.
@@ -65,4 +65,4 @@ No PHI in display payloads; test reconnect, duplicate events, audio enablement a
   - "Recently called" duplicated recalled tickets.
   - Ticket numbers wrapped on the card.
 ## Completion
-- [ ] Acceptance criteria verified and implementation plan updated.
+- [x] Acceptance criteria verified and implementation plan updated. CI (GitHub Actions `tests`, run 11 on `main`, 2026-11-27) passed: Pint, PHPStan, the display JS tests, migrations, the backup and restore drill and the full Pest suite (including the multi-process concurrency tests) on PostgreSQL 16.
